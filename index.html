@@ -109,7 +109,7 @@
                     <div className="hidden md:flex gap-8 text-xs font-semibold uppercase tracking-widest items-center">
                         <button onClick={(e) => scrollToSection(e, 'top')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Главное</button>
                         <button onClick={(e) => scrollToSection(e, 'catalog')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Каталог</button>
-                        <a href="https://www.instagram.com/dalagame.qz" target="_blank" rel="noreferrer" className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Отзывы</a>
+                        <button onClick={(e) => scrollToSection(e, 'reviews')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Отзывы</button>
                         <button onClick={(e) => scrollToSection(e, 'about')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">О нас</button>
                     </div>
                     <div className="flex items-center gap-4">
@@ -268,13 +268,86 @@
             );
         };
 
-        const GameCard = ({ game, selectedPlatform, onAddToCart }) => {
+        const GameModal = ({ game, selectedPlatform, onClose, onAddToCart }) => {
+            if (!game) return null;
+            const monthlyPrice = Math.round(game.price / 12);
+            const hasDiscount = game.discount > 0;
+
+            return (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full max-w-4xl bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden flex flex-col md:flex-row animate-fade-in shadow-2xl max-h-[90vh]">
+                        <button onClick={onClose} className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/80 rounded-full text-white transition-colors cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                        
+                        <div className="w-full md:w-2/5 h-64 md:h-auto relative bg-zinc-800 shrink-0">
+                            {game.image ? (
+                                <img src={game.image} alt={game.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white/20 font-bold">NO IMAGE</div>
+                            )}
+                            {game.isSale && (
+                                <div className="absolute top-4 left-4 bg-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                                    Акция
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="w-full md:w-3/5 p-6 md:p-8 flex flex-col overflow-hidden">
+                            <div className="mb-2 text-blue-400 text-xs font-bold uppercase tracking-widest">{game.categoryDisplay}</div>
+                            <h2 className="text-3xl font-bold font-gaming uppercase tracking-tight mb-4">{game.name}</h2>
+                            
+                            <div className="flex-1 overflow-y-auto mb-6 pr-2 custom-scrollbar">
+                                {game.description ? (
+                                    <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+                                        {game.description}
+                                    </div>
+                                ) : (
+                                    <div className="text-gray-500 italic text-sm">Описание отсутствует</div>
+                                )}
+                            </div>
+                            
+                            <div className="mt-auto pt-6 border-t border-white/10 shrink-0">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex flex-col">
+                                        {hasDiscount && (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-gray-500 line-through text-sm font-medium">{game.basePrice.toLocaleString()} ₸</span>
+                                                <span className="text-red-500 text-xs font-bold bg-red-500/10 px-1.5 py-0.5 rounded">-{game.discount}%</span>
+                                            </div>
+                                        )}
+                                        <span className="text-3xl font-bold text-white">{game.price.toLocaleString()} ₸</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-tighter">В рассрочку</p>
+                                        <p className="text-sm font-bold text-red-500">{monthlyPrice.toLocaleString()} ₸ / мес</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => {
+                                        onAddToCart(game, selectedPlatform);
+                                        onClose();
+                                    }}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold uppercase tracking-widest transition-all cursor-pointer flex justify-center items-center gap-2"
+                                >
+                                    В корзину
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const GameCard = ({ game, selectedPlatform, onAddToCart, onOpenModal }) => {
             const monthlyPrice = Math.round(game.price / 12);
             const hasDiscount = game.discount > 0;
 
             return (
                 <div className="group bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:-translate-y-4 hover:border-blue-500/50 hover:shadow-[0_20px_50px_-10px_rgba(59,130,246,0.3)]">
-                    <div className="h-80 overflow-hidden relative bg-zinc-800">
+                    <div className="h-80 overflow-hidden relative bg-zinc-800 cursor-pointer" onClick={() => onOpenModal(game)}>
                         {game.image ? (
                             <img 
                                 src={game.image} 
@@ -300,7 +373,7 @@
                         )}
                         
                         {game.isSale && (
-                            <div className="absolute top-6 right-6 bg-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                            <div className="absolute top-6 right-6 bg-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
                                 Акция
                             </div>
                         )}
@@ -311,14 +384,20 @@
                     </div>
 
                     <div className="p-8">
-                        <h3 className="text-2xl font-bold mb-4 font-gaming tracking-wide text-white group-hover:text-blue-400 transition-colors line-clamp-2 min-h-[4rem]">
+                        <h3 
+                            className="text-2xl font-bold mb-4 font-gaming tracking-wide text-white group-hover:text-blue-400 transition-colors line-clamp-2 min-h-[4rem] cursor-pointer"
+                            onClick={() => onOpenModal(game)}
+                        >
                             {game.name}
                         </h3>
                         
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex flex-col">
                                 {hasDiscount && (
-                                    <span className="text-gray-500 line-through text-sm font-medium">{game.basePrice.toLocaleString()} ₸</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500 line-through text-sm font-medium">{game.basePrice.toLocaleString()} ₸</span>
+                                        <span className="text-red-500 text-xs font-bold bg-red-500/10 px-1.5 py-0.5 rounded">-{game.discount}%</span>
+                                    </div>
                                 )}
                                 <span className="text-3xl font-bold text-white">{game.price.toLocaleString()} ₸</span>
                             </div>
@@ -340,6 +419,266 @@
             );
         };
 
+        const Reviews = () => {
+            const [showAll, setShowAll] = useState(false);
+            
+            const reviewsData = [
+                { id: 1, username: "mirkaa.7", text: "Ваш магазин лучший, адекватные цены, хорошая подача, много розыгрышей, теперь только у вас беру! ❤️", date: "1 дн." },
+                { id: 2, username: "avgzx_", text: "Спасибо сервису все работает, помогли и подсказали как все подключить. Всем советую брать отсюда делают быстро и надёжно. Не обман!!", date: "6 дн." },
+                { id: 3, username: "hanovchingiz06", text: "Спасибо сервису, покупаю не в первый раз, все сделали быстро 🔥🙌", date: "1 нед." },
+                { id: 4, username: "dianadavrenbekova", text: "Благодарю, купил наконец то black myth wukong всё супер, сервис супер, быстро отвечают 🔥❤️❤️❤️🙌🔥", date: "1 нед." },
+                { id: 5, username: "avgzx_", text: "Спасибо 🙏🏻 покупали игр 6 все работает сервис отличный! Быстро и удобно ! Всем советую и рекомендую! 🔥", date: "1 нед." },
+                { id: 6, username: "galymseidalov", text: "Очень отличный сервис, сделали все максимально быстро и удобно, приятные цены и хорошая консультация! Советую и рекомендую🔥👏", date: "1 нед." },
+                { id: 7, username: "boranbekov.m", text: "Всё просто и чётко 👏", date: "1 нед." },
+                { id: 8, username: "rrwxwxww", text: "Сервис адеми. Ответ тез бериледи. Обсуждение топ🔥 рахмет улкен. Тагы аламыз деп ойлаймын👏", date: "2 нед." },
+                { id: 9, username: "parizov_22", text: "Хочу оставить отзыв купил FIFA и остался очень доволен. Игра полностью оригинальная, всё работает отлично, без проблем с установкой. Продавец вежливый, помог выбрать нужную версию и быстро оформил покупку. Цены хорошие, а обслуживание на высоком уровне. Рекомендую этот магазин всем, кто хочет купить игры для PlayStation быстро и надёжно!", date: "2 нед." },
+                { id: 10, username: "newbagkz", text: "Лучший сервис 👍", date: "2 нед." },
+                { id: 11, username: "helcurt_f", text: "Спасибо ребятам. Быстро записали игру. Будем обращаться еще🔥", date: "2 нед." },
+                { id: 12, username: "madok_ess", text: "Все четко и быстро, спокойно покупайте 🔥", date: "2 нед." },
+                { id: 13, username: "roman7291927", text: "Лучший сервис, все супер 🔥", date: "3 нед." },
+                { id: 14, username: "kadyrov5222", text: "Быстрый и качественный сервис по дешевой покупке игр!", date: "4 нед." },
+                { id: 15, username: "godpiccch", text: "Все просто супер хороший сервис 🙌", date: "4 нед." },
+                { id: 16, username: "dharkness6", text: "Все слишком четко💪🏼💪🏼 респект", date: "5 нед." },
+                { id: 17, username: "zhas.a_", text: "быстро, недорого, качественно. спасибо большое ❤️", date: "5 нед." },
+                { id: 18, username: "sky._.true", text: "Лучшие в своем деле 🔥 Респект", date: "6 нед." },
+                { id: 19, username: "arnliov", text: "🔥🔥🔥", date: "6 нед." },
+                { id: 20, username: "_rizhiu", text: "🔥🔥🔥", date: "6 нед." },
+                { id: 21, username: "temirgalialan", text: "Отличный сервис, все быстро объяснили и установили", date: "8 нед." },
+                { id: 22, username: "you_joi3", text: "Спасибо все быстро, недорого игрой рад", date: "8 нед." },
+                { id: 23, username: "er.nur303", text: "Магазин очень крутой уже второй раз беру нба 2к✌🏻🙏", date: "9 нед." },
+                { id: 24, username: "sergeianisimov618", text: "Магазин пушка быстро все сделали", date: "9 нед." },
+                { id: 25, username: "piptrip.x", text: "Супер магазин", date: "9 нед." },
+                { id: 26, username: "bogdalion", text: "Отличные цены, сервис на высоте🔥", date: "9 нед." },
+                { id: 27, username: "nurkk.ka", text: "Крутая служба поддержки 🙌", date: "9 нед." },
+                { id: 28, username: "7_a1ihan_7", text: "кайф магазин🔥", date: "9 нед." },
+                { id: 29, username: "unugdc", text: "Все четко 🔥лучший магазин", date: "10 нед." },
+                { id: 30, username: "meelywxz_", text: "все четка🔥", date: "10 нед." },
+                { id: 31, username: "aidarr0614", text: "Быстро без обмана и каталог хороший 🔥", date: "10 нед." },
+                { id: 32, username: "nyxarit", text: "Все быстро и без обмана спасибо", date: "10 нед." },
+                { id: 33, username: "islammurzaaa", text: "Все четко,быстрый ответы и покупка.Спасибо огромное🔥❤️", date: "10 нед." },
+                { id: 34, username: "vlad.mench1kov", text: "Ребята делают свою работу на высшем , рахмет", date: "10 нед." },
+                { id: 35, username: "banknota_coins_kst", text: "Очень быстро , и качественно, советую этих ребят лучшие мастера!))🔥", date: "10 нед." },
+                { id: 36, username: "kststoner", text: "Всё быстро и качественно! Теперь игры только у этих ребят буду покупать", date: "10 нед." },
+                { id: 37, username: "alex1247076", text: "спасибо большое , все быстро и качественно 👍🏻", date: "10 нед." },
+                { id: 38, username: "sanzh111u", text: "Все честно,быстро удобно, просто идеально всем советую 🔥", date: "11 нед." },
+                { id: 39, username: "sultans.choise", text: "Не обманули все быстро и четко сделали", date: "11 нед." },
+                { id: 40, username: "daniil_1513", text: "блиин ребята сегодня приобретал игру Contra Galuga всё быстро без обмана друзья👏", date: "11 нед." },
+                { id: 41, username: "rudikalex11", text: "Спасибо магазину , все сделали быстро и чётко", date: "12 нед." },
+                { id: 42, username: "yuldashev.kz", text: "Очень всё хорошо, всё быстро установили спасибо большое", date: "12 нед." },
+                { id: 43, username: "zhazykbekova", text: "Благодарю ребят, что все быстро и качественно сделали!", date: "13 нед." },
+                { id: 44, username: "kuanyshevv.7132", text: "Купили деткам 4 игры . Установили быстро. Сервис супер 🙌", date: "14 нед." },
+                { id: 45, username: "abdulmansur.n", text: "Четко четко👍", date: "14 нед." },
+                { id: 46, username: "smirpsy_", text: "Все быстро и четко", date: "14 нед." },
+                { id: 47, username: "amangeldiyev_aa", text: "Лучший магазин 🫶", date: "15 нед." },
+                { id: 48, username: "seydildaaa", text: "Приобрел ФС26, все на высоте. Отвечают моментально, объясняют корректно! Спасибо! Молодцы!", date: "15 нед." },
+                { id: 49, username: "drfescvg", text: "Спасибо все быстро и дешево🔥", date: "15 нед." },
+                { id: 50, username: "egorpanyushkin", text: "Спасибо все быстро и четко!", date: "16 нед." },
+                { id: 51, username: "abdukarimoverzhann", text: "Несколько раз приобретал здесь игры, все быстро и качественно, спасибо!", date: "16 нед." },
+                { id: 52, username: "atltnv", text: "Спасибо всё быстро и качественно, приобретайте у них, дешевле чем у остальных 🔥", date: "16 нед." },
+                { id: 53, username: "kzkesha8062", text: "Взял игру Split Fictions, сервис топ , отвечают быстро , доброжелательные", date: "16 нед." },
+                { id: 54, username: "k.a.m.u.l.o.v", text: "Взял Фк26, все прошло быстро,качественно а главное с хорошим сервисом", date: "16 нед." },
+                { id: 55, username: "muhaaaa430", text: "Взял подписку PS Plus онлайн — всё быстро и удобно", date: "17 нед." },
+                { id: 56, username: "arma921", text: "Самый лучший сервис🔥🔥", date: "17 нед." },
+                { id: 57, username: "aldi.ik", text: "Ребята лучшие, круче Вас только яйца 🔥🔥🔥", date: "18 нед." },
+                { id: 58, username: "tas_0305", text: "Хороший сервис, быстро и надежно. Спасибо.🔥", date: "18 нед." },
+                { id: 59, username: "sanatov.t", text: "🙌", date: "18 нед." },
+                { id: 60, username: "mok23.b", text: "Крутой сервис 🔥", date: "19 нед." },
+                { id: 61, username: "askarov_akjol_askarovich", text: "Всем салам друьзя всем советаю брать игры мне очень понравелся", date: "19 нед." },
+                { id: 62, username: "bega.08", text: "Хороший сервис всё быстро и цены доступные✊✊", date: "19 нед." },
+                { id: 63, username: "abdrazacho", text: "🔥", date: "19 нед." },
+                { id: 64, username: "sergo_rudakov_", text: "Все отлично, быстро и легко! Беру уже второй раз, и определенно куплю ещё ✊", date: "19 нед." },
+                { id: 65, username: "omrvzz", text: "Быстро и качественно! Все работает 🔥🔥🔥Огромное спасибо 🙏", date: "19 нед." },
+                { id: 66, username: "ptonaster505", text: "Шикарный магазин , доступные цены и конечно хороший сервис👍🏻✊🏻", date: "19 нед." },
+                { id: 67, username: "antonovv.s", text: "Магазин топ ,качественно объяснил как скачать 🔥🔥🔥", date: "19 нед." },
+                { id: 68, username: "rasul_b0919", text: "Спасибо, все сделали быстро и качественно, теперь только у них приобретаю товар👍", date: "21 нед." },
+                { id: 69, username: "ranawoi6", text: "Отличный цифровой магазин для PS5 , большое спасибо 🔥🔥", date: "21 нед." },
+                { id: 70, username: "ibdiminovalikhan", text: "Спасибо за первую покупку все работает отлично, дальше больше!!!", date: "21 нед." },
+                { id: 71, username: "dara001t", text: "Хороший магазин,купил менеджер по Ф1,все работает,быстрый и вежливый сервис,буду советовать друзьям", date: "21 нед." },
+                { id: 72, username: "trakselnika", text: "Отличный цифровой магазин PS5-игр! Покупал здесь подписку, а также такие хиты, как Призрак Цусимы и Call of Duty — всё работает идеально. Цены просто замечательные, сервис на высшем уровне! Теперь беру игры только здесь — быстро, удобно и надёжно. 👌🎮", date: "21 нед." },
+                { id: 73, username: "andrey_berezhnyov", text: "Спасибо огромное Вашему магазину 😍все четко быстро и без воды)) все оформили быстро. Всем рекомендую 😍", date: "22 нед." },
+                { id: 74, username: "honako28", text: "В первый раз купил себе что то через этот аккаунт и всё прошло прекрасно, огромное спасибо", date: "22 нед." },
+                { id: 75, username: "saulebekov_dzh", text: "Классный магазин очень надёжный мне все понравилось ❤️❤️", date: "22 нед." },
+                { id: 76, username: "34kotk", text: "Покупаю только у них, всё делают быстро и качественно, плюс шарят в мемах", date: "22 нед." },
+                { id: 77, username: "_rmzn66", text: "Сделали все четко и быстро. Беру только у них", date: "22 нед." },
+                { id: 78, username: "grzegorzbrzeczyszczykiewiczc", text: "🔥", date: "22 нед." },
+                { id: 79, username: "ospanovvvvk", text: "Все четко и быстро, покупал уже ночью, быстро ответили и подключили, крутые🔥", date: "22 нед." },
+                { id: 80, username: "pantyukhin11", text: "Досталась пс4, незнал откуда брать игры и как ваще устанавливать, увидел в инстаграме, обратился, менеджер Арслан помог во всем в этом разобраться, все четко объяснил, качество обслуживания отличное, нет никакого обмана, через пару минут игры уже у тебя✊✊✊✊ Спасибо большое!!!", date: "23 нед." },
+                { id: 81, username: "y3rdar_", text: "Купил игру и годовую подписку, быстро, доступно, советую обращаться 🔥", date: "23 нед." },
+                { id: 82, username: "ta1murzin", text: "быстро все сделали🙌", date: "23 нед." },
+                { id: 83, username: "alex3105alex", text: "Все четко и быстро сделали, рахмет", date: "23 нед." },
+                { id: 84, username: "beishen_shymyrsultan", text: "Быстро помогли с созданием аккаунта и подключением подписки 🙂", date: "23 нед." },
+                { id: 85, username: "iliaderbush97", text: "Спасибо все в ьучшем качестве", date: "23 нед." },
+                { id: 86, username: "kid_b_e", text: "Все быстро и качественно,лучше брать сразу на год delux не пожалеете игр куча🔥", date: "23 нед." },
+                { id: 87, username: "meirembaev01", text: "Отвечают моментально, мне ответили в час ночи и я уже через пол часа играл в свою игру. Смело обращайтесь 🔥🔥🔥🔥🔥", date: "23 нед." },
+                { id: 88, username: "arturmorgan.99", text: "Впервые покупаю игру, спасибо playstationqz помогли подсказали как все настроить 🔥🔥🔥🙌", date: "23 нед." },
+                { id: 89, username: "rayd_raydes", text: "Купил Rdr2 и Uncharted коллекцию за 9к 😮 никогда такие цены не видел👏", date: "23 нед." },
+                { id: 90, username: "mukambetzhan_", text: "Отличный сервис все быстро и качественно!!!!", date: "23 нед." },
+                { id: 91, username: "dirwishd4rk", text: "🔥🔥🔥🔥 супер", date: "24 нед." },
+                { id: 92, username: "kodster228", text: "Сервис супер,купил the beast,все быстро оперативно и главное дешева!!!", date: "24 нед." },
+                { id: 93, username: "zhagparovvv_", text: "Купил сегодня fc26, оформили все быстро и четко. Отличный магазин 🔥", date: "24 нед." },
+                { id: 94, username: "bauyrzhan_tk", text: "Купил две части The last of us, давно хотел их сыграть, спасибо вам за такую возможность, быстро и качественно 🥳", date: "24 нед." },
+                { id: 95, username: "koalla_psih", text: "Купил игру, качаю. Ответили на все вопросы.", date: "24 нед." },
+                { id: 96, username: "saikiss_official", text: "Все проще чем казалось) ничего вводить не надо, скидываешь ребятам QR код дальше они все делают сами. Спасибо 💪🏼🤝✅🔥🔥", date: "24 нед." },
+                { id: 97, username: "shyngysaa", text: "Спасибо! Быстро качественно не дорого)", date: "24 нед." },
+                { id: 98, username: "ratmir_uma", text: "Купил игру,уже скачивается!Ребята быстро отвечают и все понятно объясняют 🔥", date: "24 нед." },
+                { id: 99, username: "mirxxlv", text: "Спасибо, на все вопросы отвечают быстро. Все на топовом уровне🔥", date: "24 нед." },
+                { id: 100, username: "sagdi_ss_888", text: "Спасибо очень классно❤️ Уже второй раз покупаю игру у вас ТОП🔥❤️", date: "24 нед." },
+                { id: 101, username: "lash_brow_shop_kz", text: "Спасибо большое playstationqz, помогли подсказали, были на связи всегда, сервис на высшем уровне👍 акции удобные предложения шиик👍🤝", date: "25 нед." },
+                { id: 102, username: "rasul_949_tmt_09", text: "Спасибо ребята, вы лучшие👍🏻 помогли, подсказали, все быстро,четкио и качественно, обслуживание на высшем уровне, процветания вам 🙌🏻", date: "25 нед." },
+                { id: 103, username: "bekosh_b04", text: "Спасибо большое , все внятно объяснил и помок в установке 🤝👍", date: "25 нед." },
+                { id: 104, username: "talgatkonysbaev1506", text: "Спасибо большое,все очень быстро и понятно 🙌👏🔥", date: "25 нед." },
+                { id: 105, username: "k1rieshk4", text: "Спасибо Вам,все подсказали 👏🔥🔥🔥", date: "25 нед." },
+                { id: 106, username: "yuriy_sedov", text: "спасибо вам огромное, давно за вами следила, не могла решиться взять игры. Очень приятно , быстро и все подсказали 🔥", date: "25 нед." },
+                { id: 107, username: "skyl1ne.vxwn", text: "Спасибо! 👏", date: "25 нед." },
+                { id: 108, username: "qurmanbekovvvv", text: "Good, easy and fast service, recommended", date: "25 нед." },
+                { id: 109, username: "kkomekoov", text: "Все 🔥🔥🔥", date: "25 нед." },
+                { id: 110, username: "khairllw", text: "👍🏻👍🏻", date: "25 нед." },
+                { id: 111, username: "abzhanov.alibek", text: "Крутые ребята, оперативно и чётко✊🏼 Играю с кайфом)", date: "25 нед." },
+                { id: 112, username: "kntbek", text: "Все быстро и качественно. Меньше чем за 5 минут все сделали. Рахмет!", date: "25 нед." },
+                { id: 113, username: "hiphopnato", text: "спасибо за фидбэк, все быстро и четко!", date: "25 нед." },
+                { id: 114, username: "mikhailov.sss", text: "Все супер, всегда на связи, очень доступно объясняют. Доступные цены, очень классный сервис! Рекомендую 👍", date: "25 нед." },
+                { id: 115, username: "david_gabdullin", text: "Отличные ребята , купил подписку", date: "25 нед." },
+                { id: 116, username: "chrnbrvkn.d", text: "Быстро, чётко, доступно. Рекомендую!", date: "25 нед." },
+                { id: 117, username: "urrlyutik", text: "Очень крутой магазин, все подробно объяснили и помогли 🔥", date: "25 нед." },
+                { id: 118, username: "barry_barboskeen", text: "Как все быстро и легко , удивительно 😮👏", date: "25 нед." },
+                { id: 119, username: "kolomoec996", text: "А че так можно было что ли ??? Нереально четко все !!!", date: "25 нед." },
+                { id: 120, username: "maklewx", text: "Очень понравился магазин 🎮 Всё быстро и качественно, игру получил сразу после оплаты. Всё подробно объясняют, помогли разобраться с установкой. 👍 Теперь беру игры только здесь — надёжно и удобно!", date: "25 нед." },
+                { id: 121, username: "ergeshov.sss", text: "быстро и оперативно🔥🔥🔥", date: "26 нед." },
+                { id: 122, username: "egorpanyushkin", text: "Все понятно и быстро🔥", date: "26 нед." },
+                { id: 123, username: "oskar__golden", text: "Все понятно и доступно, спасибо", date: "26 нед." },
+                { id: 124, username: "nekitt_81", text: "Подключили 5 игр , очень быстро , могу теперь насладиться отпуском )", date: "26 нед." },
+                { id: 125, username: "jukupov___05", text: "качественно быстро ответили сразу", date: "26 нед." },
+                { id: 126, username: "offwazupp", text: "Всё понятно и быстро. Спасибо огромное!", date: "26 нед." },
+                { id: 127, username: "ernurshon83", text: "Ответили моментально. Оформили две игры в течении 20 минут. Цены порадовали,так еще и объяснили доходчиво. Спасибо большое,думаю еще не раз возьму тут", date: "26 нед." },
+                { id: 128, username: "baurp0wer", text: "Купил подписку PS4 + все супер Доступнная цена качественное обслуживание теперь всегда у вас буду преобретать Спасибо большое", date: "26 нед." },
+                { id: 129, username: "sembayevm", text: "Отличный сервис. Работают оперативно и качественно. Купил RDR2, сразу понятно объяснили как запустить. Играю и не могу нарадоваться, очень нравится. Спасибо 👍", date: "26 нед." },
+                { id: 130, username: "jas_1211", text: "Быстро и качественно 🔥", date: "26 нед." },
+                { id: 131, username: "daniyar_475", text: "Все качественно и быстро! Спасибо парни", date: "26 нед." },
+                { id: 132, username: "nik_32149", text: "Все супер ребята молодцы все подсказали рекомдую 🔥🔥🔥", date: "27 нед." },
+                { id: 133, username: "rusyago", text: "Всё класно❤️❤️❤️", date: "27 нед." },
+                { id: 134, username: "shevelyov_alexander", text: "приобрел несколько игр, все классно ребята🫰🏼", date: "27 нед." },
+                { id: 135, username: "serik_satmuldinov", text: "Рахмет, купил игру, в течении 2 минут уже скачиваю игру👍", date: "27 нед." },
+                { id: 136, username: "manta_mmm", text: "Купил Fifa 25 у вас, всё чётко 🔥", date: "27 нед." },
+                { id: 137, username: "dan_xss", text: "Быстро обслужили, все супер🙌❤️", date: "27 нед." },
+                { id: 138, username: "roman_turovskiu", text: "Купил подписку, спасибо большое! Буду теперь у вас приобретать 😁👍🏻👍🏻", date: "27 нед." },
+                { id: 139, username: "maralhan__", text: "Купил подписку теперь играю в топ игры , лучший магазин 🔥", date: "27 нед." },
+                { id: 140, username: "daulet_sandugash", text: "Все супер все объяснили купил Fc26 по очень выгодной цене", date: "28 нед." },
+                { id: 141, username: "toleubaevich__", text: "🔥керемет. Бастапқы қарым қатынас, маған ұнап жатыр👏", date: "28 нед." },
+                { id: 142, username: "krmbdv_first", text: "Әдемі әдемі🔥", date: "28 нед." },
+                { id: 143, username: "thedragon.show", text: "Лучшие💪🏼 все четко и оперативно.", date: "28 нед." },
+                { id: 144, username: "eslinger_tanja", text: "❤️🔥 КаеФ", date: "28 нед." },
+                { id: 145, username: "micls_chef", text: "Все быстро, четко, просто. Рекомендую. 👍", date: "28 нед." },
+                { id: 146, username: "zamanov16", text: "Все отлично работает, оперативно", date: "28 нед." },
+                { id: 147, username: "eleuovv_09", text: "🔥🔥🔥", date: "28 нед." },
+                { id: 148, username: "honey.beezy1", text: "Отличный магазин, рекомендую👏", date: "28 нед." },
+                { id: 149, username: "adiyattk", text: "Все супер советую крутые просто!!!", date: "28 нед." },
+                { id: 150, username: "skas102030", text: "🔥🔥🔥", date: "28 нед." },
+                { id: 151, username: "real.vvt", text: "Все сделали быстро все объяснили 🔥👏", date: "29 нед." },
+                { id: 152, username: "ibraev216", text: "Безумно оперативно и качественно работают ✊🏼👍🏼👍🏼👍🏼", date: "29 нед." },
+                { id: 153, username: "ibraev216", text: "Обратная связь хорошая 👍", date: "29 нед." },
+                { id: 154, username: "eraaa_erboluly77", text: "Спасибо хороший магазин 🔥", date: "29 нед." },
+                { id: 155, username: "mustavatu", text: "Спасибо большое все четко и понятно объяснили.Купил игру Человек паук 2 🔥❤️", date: "29 нед." },
+                { id: 156, username: "saverdin_mamyrov", text: "Спасибо сделали все быстро и четко", date: "29 нед." },
+                { id: 157, username: "1brakhimov.s", text: "Супер магазин, спасибо вам🔥", date: "29 нед." },
+                { id: 158, username: "r.sutyushev", text: "Отличный сервис, рекомендую ✅", date: "29 нед." },
+                { id: 159, username: "efimka59", text: "Оформил предзаказ FC26. Все быстро, чётко и понятно. Однозначно рекомендую!🔥", date: "30 нед." },
+                { id: 160, username: "diss21o6", text: "Все как всегда, на высшем уровне! Уже не в первый раз обращаюсь! Спасибо большое!! 🔥❤️", date: "30 нед." },
+                { id: 161, username: "the__boroda", text: "Спасибо большое все быстро и грамотно сделано 👏", date: "30 нед." },
+                { id: 162, username: "baidalyn18", text: "Отличный сервис игры дешевле чем у других 🔥👏", date: "30 нед." },
+                { id: 163, username: "kukaaaaa_____", text: "Спасибо большое за быструю помощь и за вашу работу 👍", date: "30 нед." },
+                { id: 164, username: "aidkinsss", text: "Быстро и качественно однозначно большой +🔥", date: "30 нед." },
+                { id: 165, username: "zommer_alexandr", text: "ооочень быстро установили игру которую братишка хотел,спасибо большое за оперативность🔥", date: "30 нед." },
+                { id: 166, username: "the.alym", text: "Все круто! Быстро произвели установку цифровой версии игры, вообще без проблем 🔥🔥🔥", date: "30 нед." },
+                { id: 167, username: "ka1rzhan21", text: "Хороший ассортимент четко и быстро спасибо 🔥🔥👏", date: "30 нед." },
+                { id: 168, username: "t_zhmv", text: "Мошениктер емес таза живой аккаунт озим жана фс26 предзаказ жасап койдм менде баснда коп бакыладм шын ба отрк аккаунтпа деп брак отзывтарды окп корп козим жетп отр бул шын аккаунт екенинне @playstationqz магазинене рахмет❤️ женилдик жасап берди конкурскада катсп жатрмн 👏барлыгына рахмет😍🔥❤️", date: "30 нед." },
+                { id: 169, username: "valekvalek776", text: "Спасибо ребята! Как обычно все быстро и четко. Самое главное постоянная поддержка и стабильная игра👍👍👍", date: "31 нед." },
+                { id: 170, username: "slmzhnv_", text: "Все супер быстро ответили ,все что нужно помогли ,не смотря на график работы))) писал почти в 12 вечера🔥", date: "31 нед." },
+                { id: 171, username: "w_1_n_d_s_t_o_r_m", text: "Сделали все быстро. Всему рад. Спасибо огромное!🔥🔥🔥", date: "31 нед." },
+                { id: 172, username: "lv__ye", text: "Лучший сервис, всё доступно и понятно, быстро и четко ответили и обслужили 🫶", date: "31 нед." },
+                { id: 173, username: "khamidulla_aidos_", text: "Вчера впервые сделал заказ! Все быстро и четко отработали! Очень хороший сервис!", date: "31 нед." },
+                { id: 174, username: "nikitabalanchaev", text: "Лучший магазин, лучшие цены и лучшее обслуживание😍", date: "31 нед." },
+                { id: 175, username: "not_every_amir", text: "🔥🔥🔥🔥", date: "31 нед." },
+                { id: 176, username: "kossay.yermekov", text: "Все быстро сделали , спасибо", date: "31 нед." },
+                { id: 177, username: "abylaikhanns", text: "🔥🔥🔥", date: "31 нед." },
+                { id: 178, username: "a_s_bjj", text: "Рахмет, все очень быстро сделали. Оперативная работа 🔥🔥", date: "31 нед." },
+                { id: 179, username: "kurakbayev_ak", text: "Большое спасибо игра быстро скачалась", date: "31 нед." },
+                { id: 180, username: "berikmagambetov", text: "Купил игру на PlayStation через этот Instagram-магазин — всё прошло быстро и без проблем. Отличный сервис, продавец на связи, товар получил сразу. Рекомендую! 🎮✅", date: "32 нед." },
+                { id: 181, username: "alikhhh774_", text: "🔥🔥🔥", date: "32 нед." },
+                { id: 182, username: "_zheten_", text: "Все отлично спасибо огромное", date: "32 нед." },
+                { id: 183, username: "aboyeerr", text: "Все сделали быстро, сервис на уровне, все вежливо объяснили, в общем ребята молодцы 👍", date: "32 нед." },
+                { id: 184, username: "ars.baigissiyev", text: "Жақсы сервис советую ключ пайда боса без вопросов степ береды отзыв😘", date: "32 нед." },
+                { id: 185, username: "daulleettt", text: "Быстро работают, доступные цены и акции, а главное душевно и качественно 💚", date: "32 нед." },
+                { id: 186, username: "client_kz", text: "Барлығы күшті,Рақмет👏🏻", date: "32 нед." },
+                { id: 187, username: "al1werr_", text: "Сервис очень хороший! Прям понравились! Все очень быстро и четко! Дальнейшим буду покупать здесь!🔥", date: "32 нед." },
+                { id: 188, username: "_bayanbek_ulan_", text: "Все отлично спасибо 👏👏", date: "32 нед." },
+                { id: 189, username: "itsporello", text: "Приобрел подписку,все четко помогли и рассказали,,всем советую 🔥🙌", date: "32 нед." },
+                { id: 190, username: "iskakov_bjj", text: "магазин бомба ежже😍", date: "32 нед." },
+                { id: 191, username: "burkutbaeff", text: "Спасибо за игру!!! То что хотела дочка) ну и я тоже ❤️❤️❤️", date: "33 нед." },
+                { id: 192, username: "yeltaysh", text: "Спасибо быстро и удобно 🔥🔥", date: "33 нед." },
+                { id: 193, username: "artm.arr", text: "Теперь оставшееся лето будет...", date: "33 нед." }
+            ];
+
+            const displayedReviews = showAll ? reviewsData : reviewsData.slice(0, 12);
+
+            return (
+                <section id="reviews" className="py-24 px-6 max-w-7xl mx-auto">
+                    <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-8">
+                        <div>
+                            <h2 className="text-4xl md:text-5xl font-bold font-gaming uppercase tracking-tight mb-4">
+                                Отзывы <span className="text-blue-500">клиентов</span>
+                            </h2>
+                            <div className="h-1.5 w-24 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                        </div>
+                        <a 
+                            href="https://www.instagram.com/reel/DBamMTishAy/?igsh=MWpiNGN5amx1c3RxbA==" 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="flex items-center gap-2 text-blue-500 hover:text-white transition-colors font-bold uppercase tracking-widest text-sm"
+                        >
+                            Смотреть видео с отзывами
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        </a>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {displayedReviews.map(review => (
+                            <div key={review.id} className="bg-zinc-900/40 border border-white/5 p-6 rounded-3xl hover:border-blue-500/30 transition-colors">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold">
+                                        {review.username.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-sm">@{review.username}</div>
+                                        <div className="text-xs text-gray-500">{review.date}</div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1 mb-3 text-yellow-500">
+                                    {[...Array(5)].map((_, i) => (
+                                        <svg key={i} xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                                    ))}
+                                </div>
+                                <p className="text-gray-300 text-sm leading-relaxed">
+                                    "{review.text}"
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+
+                    {!showAll && reviewsData.length > 12 && (
+                        <div className="mt-12 flex justify-center">
+                            <button 
+                                onClick={() => setShowAll(true)}
+                                className="bg-zinc-800 hover:bg-zinc-700 text-white px-8 py-4 rounded-xl font-bold transition-colors border border-white/10 cursor-pointer flex items-center gap-2"
+                            >
+                                Показать все отзывы ({reviewsData.length})
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                        </div>
+                    )}
+                </section>
+            );
+        };
+
         const App = () => {
             const [selectedCategory, setSelectedCategory] = useState('Все');
             const [selectedPlatform, setSelectedPlatform] = useState(null);
@@ -352,6 +691,7 @@
 
             const [cart, setCart] = useState([]);
             const [isCartOpen, setIsCartOpen] = useState(false);
+            const [selectedGame, setSelectedGame] = useState(null);
 
             useEffect(() => {
                 const fetchData = async () => {
@@ -379,30 +719,56 @@
                         }).filter(Boolean);
                         setDescriptions(parsedDesc);
                         
-                        // Парсим CSV игр
-                        const rows = gamesData.split('\n').filter(row => row.trim() !== '').slice(1);
-                        const parsed = rows.map((row, index) => {
-                            // Регулярка для CSV
-                            const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                            
-                            const name = cols[0]?.replace(/^"|"$/g, '').trim() || 'Без названия';
-                            const discountString = cols[1]?.replace(/^"|"$/g, '').trim() || '';
-                            const pricePS5String = cols[2]?.replace(/^"|"$/g, '').trim() || '0';
-                            const pricePS4String = cols[3]?.replace(/^"|"$/g, '').trim() || '0';
-                            const image = cols[4]?.replace(/^"|"$/g, '').trim() || '';
+                        // Парсим CSV игр с учетом переносов строк в кавычках
+                        const parseCSV = (text) => {
+                            const result = [];
+                            let row = [];
+                            let col = '';
+                            let inQuotes = false;
+                            for (let i = 0; i < text.length; i++) {
+                                const char = text[i];
+                                if (char === '"') {
+                                    inQuotes = !inQuotes;
+                                } else if (char === ',' && !inQuotes) {
+                                    row.push(col.trim());
+                                    col = '';
+                                } else if (char === '\n' && !inQuotes) {
+                                    row.push(col.trim());
+                                    if (row.some(c => c !== '')) result.push(row);
+                                    row = [];
+                                    col = '';
+                                } else if (char !== '\r') {
+                                    col += char;
+                                }
+                            }
+                            if (col !== '' || row.length > 0) {
+                                row.push(col.trim());
+                                if (row.some(c => c !== '')) result.push(row);
+                            }
+                            return result;
+                        };
+
+                        const rows = parseCSV(gamesData).slice(1); // Пропускаем заголовок
+                        
+                        const parsed = rows.filter(cols => cols.length > 1 && cols[0]).map((cols, index) => {
+                            const name = cols[0] || 'Без названия';
+                            const discountString = cols[1] || '';
+                            const pricePS5String = cols[2] || '0';
+                            const pricePS4String = cols[3] || '0';
+                            const image = cols[4] || '';
+                            const description = cols[5] || '';
                             
                             let discount = 0;
-                            const discountMatch = discountString.match(/^-?(\d+)%?$/);
-                            if (discountMatch) {
-                                discount = parseInt(discountMatch[1], 10);
+                            // Извлекаем любые цифры из строки скидки (например, "-10%", "10", "скидка 15%")
+                            const discountNum = parseInt(discountString.replace(/\D/g, ''), 10);
+                            if (!isNaN(discountNum) && discountNum > 0 && discountNum <= 100) {
+                                discount = discountNum;
                             }
 
                             // Считываем жанры из колонок 7 и далее (индексы 6+)
-                            // Формируем массив всех возможных жанров для этой игры
                             const rawCats = cols.slice(6);
                             const categories = rawCats
-                                .map(c => c?.replace(/^"|"$/g, '').trim()) // Чистим от кавычек и пробелов
-                                .filter(c => c && c.toLowerCase() !== 'playstation'); // Убираем пустые и 'PlayStation'
+                                .filter(c => c && c.toLowerCase() !== 'playstation');
 
                             // Для отображения на карточке объединяем через разделитель
                             const categoryDisplay = categories.join(' • ');
@@ -419,6 +785,7 @@
                                 image,
                                 categories, // Массив жанров для фильтрации
                                 categoryDisplay, // Строка для отображения
+                                description, // Описание игры
                                 isNew: index < 3,
                                 discount, // Сохраняем процент скидки
                                 isSale: discount > 0 // Флаг для бейджа "Акция"
@@ -510,6 +877,12 @@
                         cart={cart} 
                         onRemove={removeFromCart} 
                         onCheckout={checkoutCart} 
+                    />
+                    <GameModal 
+                        game={selectedGame} 
+                        selectedPlatform={selectedPlatform} 
+                        onClose={() => setSelectedGame(null)} 
+                        onAddToCart={addToCart} 
                     />
                     <Hero descriptions={descriptions} />
 
@@ -618,6 +991,7 @@
                                                     game={game} 
                                                     selectedPlatform={selectedPlatform}
                                                     onAddToCart={addToCart} 
+                                                    onOpenModal={setSelectedGame}
                                                 />
                                             ))
                                         ) : (
@@ -655,6 +1029,8 @@
                             </div>
                         </div>
                     </section>
+
+                    <Reviews />
 
                     {/* About Us Section */}
                     <section id="about" className="py-24 px-6 max-w-7xl mx-auto border-t border-white/5">
