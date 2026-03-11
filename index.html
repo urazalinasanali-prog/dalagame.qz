@@ -79,18 +79,22 @@
         
         // --- COMPONENTS ---
 
-        const Navbar = () => {
+        const Navbar = ({ cartCount, onOpenCart }) => {
             const handleConsultation = () => {
                 const message = "Саламатсыз ба! Консультация алғым келеді.";
                 const url = "https://api.whatsapp.com/send?phone=" + WHATSAPP_PHONE + "&text=" + encodeURIComponent(message);
                 window.open(url, '_blank');
             };
 
-            const scrollToCatalog = (e) => {
+            const scrollToSection = (e, id) => {
                 e.preventDefault();
-                const catalogSection = document.getElementById('catalog');
-                if (catalogSection) {
-                    catalogSection.scrollIntoView({ behavior: 'smooth' });
+                if (id === 'top') {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+                const section = document.getElementById(id);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
                 }
             };
 
@@ -100,20 +104,30 @@
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center ps-blue-glow rotate-3 group-hover:rotate-6 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                         </div>
-                        <span className="text-2xl font-bold tracking-tighter font-gaming group-hover:text-blue-400 transition-colors">@dalagame.qz</span>
+                        <span className="text-2xl font-bold tracking-tighter font-gaming group-hover:text-blue-400 transition-colors hidden sm:block">@dalagame.qz</span>
                     </a>
                     <div className="hidden md:flex gap-8 text-xs font-semibold uppercase tracking-widest items-center">
-                        <button onClick={scrollToCatalog} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Каталог</button>
-                        <div className="flex items-center gap-2">
-                            <span className="text-red-500 font-bold animate-pulse">Kaspi Red 0-0-12</span>
-                        </div>
+                        <button onClick={(e) => scrollToSection(e, 'top')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Главное</button>
+                        <button onClick={(e) => scrollToSection(e, 'catalog')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Каталог</button>
+                        <a href="https://www.instagram.com/dalagame.qz" target="_blank" rel="noreferrer" className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Отзывы</a>
+                        <button onClick={(e) => scrollToSection(e, 'about')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">О нас</button>
                     </div>
-                    <button 
-                        onClick={handleConsultation}
-                        className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95"
-                    >
-                        КОНСУЛЬТАЦИЯ
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button onClick={onOpenCart} className="relative p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                            {cartCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                                    {cartCount}
+                                </span>
+                            )}
+                        </button>
+                        <button 
+                            onClick={handleConsultation}
+                            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95 hidden sm:block"
+                        >
+                            КОНСУЛЬТАЦИЯ
+                        </button>
+                    </div>
                 </nav>
             );
         };
@@ -130,11 +144,16 @@
             return (
                 <section className="relative h-screen flex items-center justify-center overflow-hidden">
                     <div className="absolute inset-0 z-0">
-                        <img 
-                            src="https://gta5.su/wp-content/uploads/2018/03/gta_v_art_2018.jpg" 
-                            className="w-full h-full object-cover opacity-20 scale-110 blur-sm"
-                            alt="Background"
-                        />
+                        <video 
+                            autoPlay 
+                            loop 
+                            muted 
+                            playsInline
+                            className="w-full h-full object-cover opacity-40 scale-105"
+                        >
+                            {/* Замените ссылку ниже на ваше видео */}
+                            <source src="https://cdn.pixabay.com/video/2020/05/24/40090-424838634_large.mp4" type="video/mp4" />
+                        </video>
                         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]"></div>
                     </div>
                     
@@ -196,14 +215,62 @@
             );
         };
 
-        const GameCard = ({ game }) => {
-            const orderGame = (name, price) => {
-                const message = `Саламатсыз ба! Dala Game сайтынан жазып тұрмын. Осы ойынды алғым келеді: ${name}. Бағасы: ${price} тг. Каспи Ред-пен төлеуге бола ма?`;
-                const url = "https://api.whatsapp.com/send?phone=" + WHATSAPP_PHONE + "&text=" + encodeURIComponent(message);
-                window.open(url, '_blank');
-            };
+        const Cart = ({ isOpen, onClose, cart, onRemove, onCheckout }) => {
+            if (!isOpen) return null;
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
 
+            return (
+                <div className="fixed inset-0 z-[100] flex justify-end">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full max-w-md bg-[#0a0a0a] h-full border-l border-white/10 p-6 flex flex-col animate-slide-in-right">
+                        <div className="flex justify-between items-center mb-8">
+                            <h2 className="text-2xl font-bold font-gaming uppercase">Корзина</h2>
+                            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto flex flex-col gap-4 pr-2">
+                            {cart.length === 0 ? (
+                                <div className="text-center mt-20 opacity-50">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                                    <p className="text-lg">Корзина пуста</p>
+                                </div>
+                            ) : (
+                                cart.map((item, idx) => (
+                                    <div key={idx} className="flex gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 relative group">
+                                        <img src={item.image} className="w-16 h-16 object-cover rounded-xl" alt={item.name} />
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-sm line-clamp-1">{item.name}</h4>
+                                            <p className="text-xs text-gray-400 mt-1">{item.platform}</p>
+                                            <p className="font-bold text-blue-400 mt-1">{item.price.toLocaleString('ru-RU')} ₸</p>
+                                        </div>
+                                        <button onClick={() => onRemove(idx)} className="text-gray-500 hover:text-red-500 transition-colors p-2 cursor-pointer">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                        </button>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        {cart.length > 0 && (
+                            <div className="pt-6 border-t border-white/10 mt-6">
+                                <div className="flex justify-between items-center mb-6 text-xl font-bold">
+                                    <span>Итого:</span>
+                                    <span className="text-blue-500">{total.toLocaleString('ru-RU')} ₸</span>
+                                </div>
+                                <button onClick={onCheckout} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold uppercase tracking-widest transition-all cursor-pointer flex justify-center items-center gap-2">
+                                    Оформить заказ
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13"/><path d="m22 2-7 20-4-9-9-4Z"/></svg>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const GameCard = ({ game, selectedPlatform, onAddToCart }) => {
             const monthlyPrice = Math.round(game.price / 12);
+            const hasDiscount = game.discount > 0;
 
             return (
                 <div className="group bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:-translate-y-4 hover:border-blue-500/50 hover:shadow-[0_20px_50px_-10px_rgba(59,130,246,0.3)]">
@@ -249,7 +316,10 @@
                         </h3>
                         
                         <div className="flex items-center justify-between mb-8">
-                            <div>
+                            <div className="flex flex-col">
+                                {hasDiscount && (
+                                    <span className="text-gray-500 line-through text-sm font-medium">{game.basePrice.toLocaleString()} ₸</span>
+                                )}
                                 <span className="text-3xl font-bold text-white">{game.price.toLocaleString()} ₸</span>
                             </div>
                             <div className="text-right">
@@ -259,11 +329,11 @@
                         </div>
 
                         <button 
-                            onClick={() => orderGame(game.name, game.price.toString())}
-                            className="w-full bg-white text-black hover:bg-blue-600 hover:text-white py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs active:scale-95"
+                            onClick={() => onAddToCart(game, selectedPlatform)}
+                            className="w-full bg-white text-black hover:bg-blue-600 hover:text-white py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs active:scale-95 cursor-pointer"
                         >
-                            Заказать игру
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                            В корзину
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
                         </button>
                     </div>
                 </div>
@@ -279,6 +349,9 @@
             const [descriptions, setDescriptions] = useState([]);
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
+
+            const [cart, setCart] = useState([]);
+            const [isCartOpen, setIsCartOpen] = useState(false);
 
             useEffect(() => {
                 const fetchData = async () => {
@@ -313,13 +386,20 @@
                             const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                             
                             const name = cols[0]?.replace(/^"|"$/g, '').trim() || 'Без названия';
+                            const discountString = cols[1]?.replace(/^"|"$/g, '').trim() || '';
                             const pricePS5String = cols[2]?.replace(/^"|"$/g, '').trim() || '0';
                             const pricePS4String = cols[3]?.replace(/^"|"$/g, '').trim() || '0';
                             const image = cols[4]?.replace(/^"|"$/g, '').trim() || '';
                             
-                            // Считываем жанры из колонок 6 и далее (индексы 5+)
+                            let discount = 0;
+                            const discountMatch = discountString.match(/^-?(\d+)%?$/);
+                            if (discountMatch) {
+                                discount = parseInt(discountMatch[1], 10);
+                            }
+
+                            // Считываем жанры из колонок 7 и далее (индексы 6+)
                             // Формируем массив всех возможных жанров для этой игры
-                            const rawCats = cols.slice(5);
+                            const rawCats = cols.slice(6);
                             const categories = rawCats
                                 .map(c => c?.replace(/^"|"$/g, '').trim()) // Чистим от кавычек и пробелов
                                 .filter(c => c && c.toLowerCase() !== 'playstation'); // Убираем пустые и 'PlayStation'
@@ -340,6 +420,8 @@
                                 categories, // Массив жанров для фильтрации
                                 categoryDisplay, // Строка для отображения
                                 isNew: index < 3,
+                                discount, // Сохраняем процент скидки
+                                isSale: discount > 0 // Флаг для бейджа "Акция"
                             };
                         });
                         
@@ -380,10 +462,16 @@
                 }
                 
                 return true;
-            }).map(game => ({
-                ...game,
-                price: selectedPlatform === 'PlayStation 5' ? game.pricePS5 : game.pricePS4
-            }));
+            }).map(game => {
+                const basePrice = selectedPlatform === 'PlayStation 5' ? game.pricePS5 : game.pricePS4;
+                const finalPrice = game.discount > 0 ? Math.round(basePrice * (1 - game.discount / 100)) : basePrice;
+                
+                return {
+                    ...game,
+                    basePrice,
+                    price: finalPrice
+                };
+            });
 
             const handleOrderGeneral = () => {
                 const message = "Саламатсыз ба! Рассрочка туралы сұрайын деп едім.";
@@ -391,9 +479,38 @@
                 window.open(url, '_blank');
             };
 
+            const addToCart = (game, platform) => {
+                setCart([...cart, { ...game, platform }]);
+                setIsCartOpen(true);
+            };
+
+            const removeFromCart = (index) => {
+                setCart(cart.filter((_, i) => i !== index));
+            };
+
+            const checkoutCart = () => {
+                if (cart.length === 0) return;
+                let message = "Саламатсыз ба! Dala Game сайтынан жазып тұрмын. Осы ойындарды алғым келеді:\n\n";
+                let total = 0;
+                cart.forEach((item, i) => {
+                    message += `${i + 1}. ${item.name} (${item.platform}) - ${item.price} ₸\n`;
+                    total += item.price;
+                });
+                message += `\nБарлығы: ${total} ₸\nКаспи Ред-пен төлеуге бола ма?`;
+                const url = "https://api.whatsapp.com/send?phone=" + WHATSAPP_PHONE + "&text=" + encodeURIComponent(message);
+                window.open(url, '_blank');
+            };
+
             return (
                 <div className="min-h-screen">
-                    <Navbar />
+                    <Navbar cartCount={cart.length} onOpenCart={() => setIsCartOpen(true)} />
+                    <Cart 
+                        isOpen={isCartOpen} 
+                        onClose={() => setIsCartOpen(false)} 
+                        cart={cart} 
+                        onRemove={removeFromCart} 
+                        onCheckout={checkoutCart} 
+                    />
                     <Hero descriptions={descriptions} />
 
                     {/* Catalog Section */}
@@ -496,7 +613,12 @@
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                                         {filteredGames.length > 0 ? (
                                             filteredGames.map(game => (
-                                                <GameCard key={game.id} game={game} />
+                                                <GameCard 
+                                                    key={game.id} 
+                                                    game={game} 
+                                                    selectedPlatform={selectedPlatform}
+                                                    onAddToCart={addToCart} 
+                                                />
                                             ))
                                         ) : (
                                             <div className="col-span-full text-center py-20 text-gray-500 flex flex-col items-center">
@@ -531,6 +653,20 @@
                                     Оформить в рассрочку
                                 </button>
                             </div>
+                        </div>
+                    </section>
+
+                    {/* About Us Section */}
+                    <section id="about" className="py-24 px-6 max-w-7xl mx-auto border-t border-white/5">
+                        <div className="text-center max-w-3xl mx-auto">
+                            <h2 className="text-4xl md:text-5xl font-bold font-gaming uppercase mb-8">О <span className="text-blue-500">нас</span></h2>
+                            <p className="text-gray-300 text-lg leading-relaxed mb-6">
+                                Мы — команда <span className="text-white font-bold">DALA GAME</span>, специализирующаяся на безопасной и быстрой установке цифровых игр для PlayStation 4 и 5. 
+                                Наша цель — сделать гейминг доступным для каждого, предлагая лучшие цены, удобную рассрочку Kaspi Red и удаленную установку прямо к вам домой.
+                            </p>
+                            <p className="text-gray-300 text-lg leading-relaxed">
+                                Доверьтесь профессионалам и наслаждайтесь любимыми играми без лишних хлопот!
+                            </p>
                         </div>
                     </section>
 
