@@ -19,10 +19,6 @@
     <!-- Babel Standalone (to compile JSX in browser) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Firebase SDK (Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
@@ -54,17 +50,6 @@
             background: #3b82f6;
         }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body>
     <!-- Root Element -->
@@ -81,23 +66,6 @@
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJNJu3ItvN4gbicHMmBPMEuX0iKSoi30tYKpkEMgpFlbwNXEZcgNag9JA_-mreOgiiGh4_h8Bd4QJD/pub?gid=1418400211&single=true&output=csv";
         const DESC_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJNJu3ItvN4gbicHMmBPMEuX0iKSoi30tYKpkEMgpFlbwNXEZcgNag9JA_-mreOgiiGh4_h8Bd4QJD/pub?gid=1350001392&single=true&output=csv";
         
-        // --- FIREBASE INITIALIZATION ---
-        const firebaseConfig = {
-            projectId: "gen-lang-client-0750114527",
-            appId: "1:803332148250:web:e3958a118022d566f6d5a3",
-            apiKey: "AIzaSyBCkru9ODQc_O8B0-IhpxgIaK_DDw_lOyA",
-            authDomain: "gen-lang-client-0750114527.firebaseapp.com",
-            firestoreDatabaseId: "ai-studio-363bf2f6-f6e7-4908-9943-8369985809d6",
-            storageBucket: "gen-lang-client-0750114527.firebasestorage.app",
-            messagingSenderId: "803332148250",
-            measurementId: ""
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
-
         // --- COMPONENTS ---
 
         const Navbar = ({ cartCount, onOpenCart, onResetSelection }) => {
@@ -166,16 +134,6 @@
             return (
                 <section className="relative h-screen flex items-center justify-center overflow-hidden">
                     <div className="absolute inset-0 z-0">
-                        <video 
-                            autoPlay 
-                            loop 
-                            muted 
-                            playsInline
-                            className="w-full h-full object-cover opacity-40 scale-105"
-                        >
-                            {/* Замените ссылку ниже на ваше видео */}
-                            <source src="https://cdn.pixabay.com/video/2020/05/24/40090-424838634_large.mp4" type="video/mp4" />
-                        </video>
                         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]"></div>
                     </div>
                     
@@ -711,48 +669,29 @@
             );
         };
 
-        const TradeIn = () => {
-            const [gameTitle, setGameTitle] = useState('');
-            const [login, setLogin] = useState('');
-            const [password, setPassword] = useState('');
-            const [contactInfo, setContactInfo] = useState('');
-            const [isSubmitting, setIsSubmitting] = useState(false);
-            const [isSuccess, setIsSuccess] = useState(false);
 
-            const handleSubmit = async (e) => {
+        const TradeIn = () => {
+            const [gameToGive, setGameToGive] = useState('');
+            const [gameToGet, setGameToGet] = useState('');
+            const [consoleVersion, setConsoleVersion] = useState('PS4');
+            const [isSubmitting, setIsSubmitting] = useState(false);
+
+            const handleSubmit = (e) => {
                 e.preventDefault();
-                if (isSubmitting) return;
-                
                 setIsSubmitting(true);
                 
-                try {
-                    const requestData = {
-                        gameTitle,
-                        login,
-                        password,
-                        contactInfo
-                    };
-                    
-                    await fetch("https://script.google.com/macros/s/AKfycbwJN0XE_c0kO0jeDPwVGp0qcG-02FI8PK903W76tM4fPS3yTfyyd76ph_yBNzlkW9NR/exec", {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(requestData)
-                    });
-                    
-                    setIsSuccess(true);
-                    setGameTitle('');
-                    setLogin('');
-                    setPassword('');
-                    setContactInfo('');
-                } catch (error) {
-                    console.error("Error submitting trade-in:", error);
-                    alert("Ошибка при отправке. Пожалуйста, попробуйте позже.");
-                } finally {
-                    setIsSubmitting(false);
-                }
+                const message = `Здравствуйте! Хочу сделать Trade In:%0A%0A` +
+                                `Игра, которую хочу сдать: ${gameToGive}%0A` +
+                                `Игра, которую хочу получить: ${gameToGet}%0A` +
+                                `Версия приставки: ${consoleVersion}`;
+                
+                const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_PHONE}&text=${message}`;
+                window.open(url, '_blank');
+                
+                setIsSubmitting(false);
+                setGameToGive('');
+                setGameToGet('');
+                setConsoleVersion('PS4');
             };
 
             return (
@@ -762,98 +701,56 @@
                             <h2 className="text-4xl md:text-6xl font-bold font-gaming uppercase mb-6">
                                 <span className="text-blue-500">Trade</span> In
                             </h2>
-                            <p className="text-2xl text-white font-bold mb-4">Верни старую игру и получи скидку на новую!</p>
+                            <p className="text-xl text-white font-bold mb-4">Прошёл игру или она просто не зашла? Не держи её «мертвым грузом» на приставке. Сдай игру обратно нам и получи выгодную скидку на новую покупку!</p>
                             <p className="text-gray-400 text-lg mb-8">
-                                Мы ценим наших клиентов и предлагаем выгодные условия обмена. Просто заполните форму ниже, указав данные вашего аккаунта с игрой, которую хотите обменять, и мы свяжемся с вами для оценки скидки.
+                                Обновляй свою коллекцию без переплат — играй в новинки уже сегодня.<br/><br/>
+                                <span className="text-blue-400 font-bold">@dalagame.qz</span> — меняй старые игры на новые эмоции!
                             </p>
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-4 text-gray-300">
-                                    <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>
-                                    </div>
-                                    <span>Быстрая оценка</span>
-                                </div>
-                                <div className="flex items-center gap-4 text-gray-300">
-                                    <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6L9 17l-5-5"/></svg>
-                                    </div>
-                                    <span>Честные цены</span>
-                                </div>
-                            </div>
                         </div>
                         
                         <div className="bg-zinc-900/50 p-8 rounded-3xl border border-white/10 backdrop-blur-sm">
-                            {isSuccess ? (
-                                <div className="text-center py-12">
-                                    <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>
-                                    </div>
-                                    <h3 className="text-2xl font-bold mb-2">Заявка отправлена!</h3>
-                                    <p className="text-gray-400 mb-8">Мы свяжемся с вами в ближайшее время для оценки.</p>
-                                    <button 
-                                        onClick={() => setIsSuccess(false)}
-                                        className="text-blue-500 hover:text-blue-400 font-bold uppercase tracking-widest text-sm"
-                                    >
-                                        Отправить еще одну
-                                    </button>
+                            <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Игра, которую хочешь сдать</label>
+                                    <input 
+                                        required
+                                        type="text"
+                                        value={gameToGive}
+                                        onChange={(e) => setGameToGive(e.target.value)}
+                                        placeholder="Название игры"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
                                 </div>
-                            ) : (
-                                <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-                                    <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Название игры</label>
-                                        <input 
-                                            required
-                                            type="text"
-                                            value={gameTitle}
-                                            onChange={(e) => setGameTitle(e.target.value)}
-                                            placeholder="Например: Spider-Man 2"
-                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Логин / Почта</label>
-                                            <input 
-                                                required
-                                                type="text"
-                                                value={login}
-                                                onChange={(e) => setLogin(e.target.value)}
-                                                placeholder="example@mail.com"
-                                                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Пароль</label>
-                                            <input 
-                                                required
-                                                type="password"
-                                                value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
-                                                placeholder="••••••••"
-                                                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Ваши контакты (WhatsApp)</label>
-                                        <input 
-                                            required
-                                            type="text"
-                                            value={contactInfo}
-                                            onChange={(e) => setContactInfo(e.target.value)}
-                                            placeholder="+7 (___) ___-__-__"
-                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
-                                        />
-                                    </div>
-                                    <button 
-                                        disabled={isSubmitting}
-                                        type="submit"
-                                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-4 rounded-xl transition-all active:scale-95 uppercase tracking-widest text-xs shadow-lg shadow-blue-600/20 mt-2"
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Игра, которую хочешь получить</label>
+                                    <input 
+                                        required
+                                        type="text"
+                                        value={gameToGet}
+                                        onChange={(e) => setGameToGet(e.target.value)}
+                                        placeholder="Название игры"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Версия приставки</label>
+                                    <select 
+                                        value={consoleVersion}
+                                        onChange={(e) => setConsoleVersion(e.target.value)}
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
                                     >
-                                        {isSubmitting ? 'Отправка...' : 'Отправить заявку'}
-                                    </button>
-                                </form>
-                            )}
+                                        <option value="PS4">PS4</option>
+                                        <option value="PS5">PS5</option>
+                                    </select>
+                                </div>
+                                <button 
+                                    disabled={isSubmitting}
+                                    type="submit"
+                                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white font-bold py-4 rounded-xl transition-all active:scale-95 uppercase tracking-widest text-xs shadow-lg shadow-green-600/20 mt-2"
+                                >
+                                    Отправить в WhatsApp
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </section>
