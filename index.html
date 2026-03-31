@@ -16,6 +16,9 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
+    <!-- Framer Motion -->
+    <script src="https://unpkg.com/framer-motion@11/dist/framer-motion.js"></script>
+    
     <!-- Babel Standalone (to compile JSX in browser) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
@@ -35,6 +38,18 @@
         .kaspi-red-badge { 
             background: linear-gradient(90deg, #ff0000 0%, #b30000 100%); 
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        .animate-bounce-in { animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
@@ -57,7 +72,13 @@
 
     <!-- Main Application Script -->
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        // Global error handler
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Global script error:", { message, source, lineno, colno, error });
+            return false;
+        };
+
+        const { useState, useEffect, useRef } = React;
 
         // --- CONSTANTS ---
         const WHATSAPP_PHONE = "77066386792"; 
@@ -65,11 +86,382 @@
         // Ссылка на CSV (Google Таблица должна быть опубликована: Файл -> Поделиться -> Опубликовать в интернете -> CSV)
         const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJNJu3ItvN4gbicHMmBPMEuX0iKSoi30tYKpkEMgpFlbwNXEZcgNag9JA_-mreOgiiGh4_h8Bd4QJD/pub?gid=1418400211&single=true&output=csv";
         const DESC_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJNJu3ItvN4gbicHMmBPMEuX0iKSoi30tYKpkEMgpFlbwNXEZcgNag9JA_-mreOgiiGh4_h8Bd4QJD/pub?gid=1350001392&single=true&output=csv";
-        const REGISTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzBCL-UsKJpxQQr1Q5Us888bxkWqHjz7a947Sd3YnxeUL3pCF8c3oTb1-0N83qTv1EF/exec"; 
+        const USERS_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJNJu3ItvN4gbicHMmBPMEuX0iKSoi30tYKpkEMgpFlbwNXEZcgNag9JA_-mreOgiiGh4_h8Bd4QJD/pub?gid=1959901530&single=true&output=csv";
+        const REGISTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7bkFGY5NpQxDeri2eRKL7GoGcsgLnrqGpY_SXX8t5k6NyAUTFQi8tWqAXPZFbWHDx/exec"; 
         
+        const { motion, useAnimation, AnimatePresence } = typeof Motion !== 'undefined' ? Motion : { motion: null, useAnimation: () => ({}), AnimatePresence: null };
+
         // --- COMPONENTS ---
 
-        const Navbar = ({ cartCount, onOpenCart, onOpenRegister, onOpenLogin, onResetSelection, lang, setLang, user, onLogout }) => {
+        const CaseOpening = ({ user, lang, onWinClaimed, onSpinStart, onWin, games }) => {
+            const [spinning, setSpinning] = React.useState(false);
+            const [result, setResult] = React.useState(null);
+            const [items, setItems] = React.useState([]);
+            const [translateX, setTranslateX] = React.useState(0);
+            const [isAnimating, setIsAnimating] = React.useState(false);
+            const [error, setError] = React.useState(null);
+            const containerRef = React.useRef(null);
+            
+            const spinSound = React.useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"));
+            const winSound = React.useRef(new Audio("https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3"));
+
+            React.useEffect(() => {
+                spinSound.current.loop = true;
+                spinSound.current.volume = 0.5;
+                winSound.current.volume = 0.7;
+                return () => {
+                    spinSound.current.pause();
+                    winSound.current.pause();
+                };
+            }, []);
+
+            const CASE_COST = 10000;
+            const WHATSAPP_PHONE = "77074044434";
+
+            const RANGES = [
+                { 
+                    id: 'low', 
+                    name: lang === 'RU' ? "Игры до 7 000 ₸" : "7 000 ₸ дейінгі ойындар", 
+                    chance: 85, 
+                    color: "bg-zinc-800",
+                    glow: "shadow-[0_0_15px_rgba(255,255,255,0.1)]",
+                    image: "https://img.icons8.com/ios-filled/100/ffffff/controller.png",
+                    minPrice: 0,
+                    maxPrice: 7000,
+                    value: 7000
+                },
+                { 
+                    id: 'mid', 
+                    name: lang === 'RU' ? "Игры 10 000 - 12 000 ₸" : "10 000 - 12 000 ₸ арасындағы ойындар", 
+                    chance: 10, 
+                    color: "bg-blue-900/40",
+                    glow: "shadow-[0_0_20px_rgba(59,130,246,0.3)]",
+                    image: "https://img.icons8.com/ios-filled/100/ffffff/trophy.png",
+                    minPrice: 10000,
+                    maxPrice: 12000,
+                    value: 11000
+                },
+                { 
+                    id: 'high', 
+                    name: lang === 'RU' ? "Игры от 15 000 ₸" : "15 000 ₸ жоғары ойындар", 
+                    chance: 5, 
+                    color: "bg-yellow-600/40",
+                    glow: "shadow-[0_0_25px_rgba(234,179,8,0.4)]",
+                    image: "https://img.icons8.com/ios-filled/100/ffffff/crown.png",
+                    minPrice: 15000,
+                    maxPrice: 1000000,
+                    value: 20000
+                }
+            ];
+
+            const generateItems = (count = 100) => {
+                const pool = [];
+                for (let i = 0; i < count; i++) {
+                    const rand = Math.random() * 100;
+                    let range;
+                    if (rand < 85) range = RANGES[0];
+                    else if (rand < 95) range = RANGES[1];
+                    else range = RANGES[2];
+                    
+                    pool.push({ ...range, spinId: i });
+                }
+                return pool;
+            };
+
+            React.useEffect(() => {
+                if (items.length === 0) {
+                    setItems(generateItems(30));
+                }
+            }, []);
+
+            const handleSpin = async () => {
+                if (spinning || isAnimating) return;
+                if (!user) {
+                    setError(lang === 'RU' ? "Пожалуйста, войдите в аккаунт" : "Жүйеге кіріңіз");
+                    return;
+                }
+                
+                const currentBalance = user.balance ?? 0;
+                if (currentBalance < CASE_COST) {
+                    setError(lang === 'RU' ? "Недостаточно средств. Пополните баланс!" : "Қаражат жеткіліксіз. Балансты толтырыңыз!");
+                    return;
+                }
+
+                // 1. Reset state and start local deduction immediately for responsiveness
+                setSpinning(true);
+                setResult(null);
+                setTranslateX(0);
+                setIsAnimating(false);
+                setError(null);
+                
+                if (onSpinStart) onSpinStart(CASE_COST);
+                window.lastManualBalanceUpdate = Date.now();
+
+                // 2. Prepare items for the spin
+                const newItems = generateItems(120);
+                setItems(newItems);
+
+                // 3. Start the animation sequence with proper timing to ensure transition works
+                // Small delay to ensure the reset to 0 and transition:none are applied by the browser
+                await new Promise(r => setTimeout(r, 50));
+                
+                // Enable transition
+                setIsAnimating(true);
+                
+                // Play spin sound
+                spinSound.current.currentTime = 0;
+                spinSound.current.play().catch(e => console.log("Audio play failed:", e));
+                
+                // Another small delay before changing transform to ensure transition:7s is active
+                await new Promise(r => setTimeout(r, 50));
+                
+                const itemWidth = 166; 
+                const winIndex = 100; 
+                const containerWidth = containerRef.current ? containerRef.current.offsetWidth : (window.innerWidth || 1000);
+                const randomOffset = Math.floor(Math.random() * 60) - 30; // Случайное смещение для реализма
+                const offset = -(winIndex * itemWidth) + (containerWidth / 2) - (itemWidth / 2) - 16 + randomOffset;
+                
+                setTranslateX(offset);
+
+                // 4. Set the win determination timeout (matches the 7s CSS transition)
+                const winTimeout = setTimeout(() => {
+                    const wonRange = newItems[winIndex];
+                    
+                    // Stop spin sound and play win sound
+                    spinSound.current.pause();
+                    winSound.current.currentTime = 0;
+                    winSound.current.play().catch(e => console.log("Audio play failed:", e));
+
+                    const finalWin = {
+                        ...wonRange,
+                        rangeName: wonRange.name,
+                        name: wonRange.name, // Use range name as the item name
+                        image: wonRange.image,
+                        price: wonRange.value || 0
+                    };
+
+                    setResult(finalWin);
+                    setSpinning(false);
+                    setIsAnimating(false);
+                    
+                    // Save win automatically to database
+                    saveWinToDatabase(finalWin);
+                }, 7200);
+
+                try {
+                    // 5. Call the server in the background to sync the deduction
+                    const response = await fetch(REGISTER_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'deductBalance',
+                            email: user.email,
+                            amount: CASE_COST
+                        })
+                    });
+                    const data = await response.json();
+
+                    if (data.status === 'error') {
+                        console.error("Server-side balance deduction failed:", data.message);
+                        // Note: In a real production app, we might want to cancel the win here,
+                        // but for UX we let it finish and maybe show an error if it's critical.
+                    }
+                } catch (e) {
+                    console.error("Network error during background deduction:", e);
+                }
+            };
+
+            const saveWinToDatabase = async (win) => {
+                console.log("Attempting to save win:", win);
+                if (!user || !user.email) {
+                    console.error("Cannot save win: User not logged in or email missing");
+                    return;
+                }
+                try {
+                    const response = await fetch(REGISTER_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'saveWin',
+                            email: user.email,
+                            win: win.name,
+                            gameName: win.name,
+                            winAmount: win.price,
+                            type: 'Case'
+                        })
+                    });
+                    const data = await response.json();
+                    console.log("Save win response:", data);
+                    if (data.status === 'success') {
+                        // If server returns new balance, use it. Otherwise use increment.
+                        if (onWin) {
+                            if (data.balance !== undefined) {
+                                onWin(parseFloat(data.balance), true);
+                            } else {
+                                onWin(win.price);
+                            }
+                        }
+                    } else {
+                        console.error("Failed to save win:", data.message);
+                    }
+                } catch (e) {
+                    console.error("Error saving win:", e);
+                }
+            };
+
+            const handleClaim = () => {
+                if (!result) return;
+
+                const winText = result.name;
+                const email = user.email;
+                const userId = user.id || '—';
+
+                const message = lang === 'RU' 
+                    ? `ВЫИГРЫШ В КЕЙСЕ!\n\nЯ выиграл категорию: ${winText}\n\nХочу выбрать игру из этой категории.\n\nМой ID: ${userId}\nEmail: ${email}`
+                    : `КЕЙСТЕН ҰТЫС!\n\nМен мына категорияны ұттым: ${winText}\n\nОсы категориядан ойын таңдағым келеді.\n\nМенің ID: ${userId}\nEmail: ${email}`;
+                
+                const url = `https://api.whatsapp.com/send?phone=${WHATSAPP_PHONE}&text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
+
+                if (onWinClaimed) onWinClaimed();
+                setResult(null);
+            };
+            return (
+                <div className="py-12 px-6 max-w-7xl mx-auto text-center animate-fade-in">
+                    <div className="mb-12">
+                        <h2 className="text-4xl md:text-6xl font-bold font-gaming uppercase mb-4 tracking-tighter">
+                            Dala<span className="text-blue-500">Case</span>
+                        </h2>
+                        <p className="text-gray-400 text-lg max-w-2xl mx-auto font-medium">
+                            @dalacase — гарантированная игра из выбранного диапазона!
+                        </p>
+                        <div className="mt-6 inline-flex items-center gap-3 bg-blue-600/10 border border-blue-500/30 px-8 py-3 rounded-2xl text-blue-400 font-bold shadow-[0_0_30px_rgba(37,99,235,0.1)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            Стоимость: 10,000 ₸
+                        </div>
+                    </div>
+
+                    <div ref={containerRef} className="relative h-56 bg-zinc-900/40 border-y border-white/5 overflow-hidden mb-16 flex items-center shadow-inner">
+                        {/* Center Indicator */}
+                        <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-blue-500 z-30 shadow-[0_0_20px_rgba(59,130,246,1)] before:content-[''] before:absolute before:top-0 before:left-1/2 before:-translate-x-1/2 before:border-l-[10px] before:border-l-transparent before:border-r-[10px] before:border-r-transparent before:border-top-[10px] before:border-top-blue-500 after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:border-l-[10px] after:border-l-transparent after:border-r-[10px] after:border-r-transparent after:border-bottom-[10px] after:border-bottom-blue-500"></div>
+                        
+                        {/* Roulette Items */}
+                        <div 
+                            className="flex gap-4 px-4"
+                            style={{ 
+                                display: 'flex', 
+                                flexWrap: 'nowrap',
+                                transform: `translateX(${translateX}px)`,
+                                transition: isAnimating ? 'transform 7s cubic-bezier(0.1, 0, 0.1, 1)' : 'none'
+                            }}
+                        >
+                            {items.map((item, i) => (
+                                <div 
+                                    key={i} 
+                                    className={`min-w-[150px] h-36 ${item.color} ${item.glow} rounded-3xl border border-white/10 p-4 flex flex-col items-center justify-center gap-3 transition-all duration-500`}
+                                >
+                                    <img src={item.image} alt="" className="h-14 w-14 object-contain opacity-90 drop-shadow-lg" />
+                                    <span className="text-[11px] font-black text-center leading-tight text-white uppercase tracking-tight">{item.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {!result ? (
+                        <div className="flex flex-col items-center gap-6">
+                            <button 
+                                onClick={handleSpin}
+                                disabled={spinning}
+                                className={`group relative bg-blue-600 hover:bg-blue-700 text-white px-16 py-6 rounded-3xl font-black text-2xl transition-all shadow-[0_10px_40px_rgba(37,99,235,0.4)] hover:shadow-[0_15px_50px_rgba(37,99,235,0.6)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 cursor-pointer overflow-hidden`}
+                            >
+                                <span className="relative z-10">
+                                    {spinning ? (lang === 'RU' ? 'КРУТИМ...' : 'АЙНАЛУДА...') : (lang === 'RU' ? 'ОТКРЫТЬ КЕЙС' : 'КЕЙСТІ АШУ')}
+                                </span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
+                            </button>
+                            {error && (
+                                <p className="text-red-500 font-bold text-lg animate-fade-in">{error}</p>
+                            )}
+                            <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest">Шансы: 85% / 10% / 5%</p>
+                        </div>
+                    ) : (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.5, y: 50 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            className="relative z-40"
+                        >
+                            <div className="bg-zinc-900/95 backdrop-blur-3xl border-2 border-yellow-500/50 rounded-[3rem] p-12 max-w-md mx-auto mb-8 shadow-[0_0_150px_rgba(234,179,8,0.3)] relative overflow-hidden">
+                                {/* Decorative elements */}
+                                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-yellow-400 to-transparent animate-shimmer"></div>
+                                <div className="absolute -top-24 -right-24 w-48 h-48 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
+
+                                <div className="text-yellow-400 text-sm font-black uppercase tracking-[0.3em] mb-8 animate-pulse">
+                                    {lang === 'RU' ? "ПОЗДРАВЛЯЕМ! ВЫ МОЖЕТЕ ВЫБРАТЬ ЛЮБУЮ ИГРУ ИЗ КАТЕГОРИИ:" : "ҚҰТТЫҚТАЙМЫЗ! СІЗ МЫНА КАТЕГОРИЯДАН КЕЗ КЕЛГЕН ОЙЫНДЫ ТАҢДАЙ АЛАСЫЗ:"}
+                                </div>
+
+                                <motion.div 
+                                    animate={{ 
+                                        scale: [1, 1.05, 1],
+                                        rotate: [0, 2, -2, 0]
+                                    }}
+                                    transition={{ 
+                                        duration: 4, 
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                    }}
+                                    className={`w-52 h-52 mx-auto ${result.color} ${result.glow} rounded-[3rem] mb-8 flex items-center justify-center shadow-2xl border-2 border-white/20 relative group`}
+                                >
+                                    <div className="absolute inset-0 bg-white/5 rounded-[3rem] group-hover:bg-white/10 transition-colors"></div>
+                                    <img src={result.image} alt="" className="w-32 h-32 object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)] relative z-10" referrerPolicy="no-referrer" />
+                                </motion.div>
+
+                                <div className="mb-10">
+                                    <h3 className="text-3xl font-black text-white uppercase tracking-tight leading-tight mb-2">
+                                        {result.name}
+                                    </h3>
+                                    <p className="text-blue-400 font-bold text-lg uppercase tracking-wider mb-4">
+                                        {lang === 'RU' ? "Вы можете выбрать любую игру из этой категории!" : "Осы санаттағы кез келген ойынды таңдай аласыз!"}
+                                    </p>
+                                    <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 rounded-2xl border border-white/10">
+                                        <span className="text-zinc-400 text-sm font-bold uppercase">{lang === 'RU' ? "Ценность:" : "Құны:"}</span>
+                                        <span className="text-2xl font-black text-yellow-400">{result.price.toLocaleString()} ₸</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-4">
+                                    <button 
+                                        onClick={handleClaim}
+                                        className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black py-6 rounded-2xl font-black text-xl transition-all shadow-[0_15px_40px_rgba(234,179,8,0.3)] hover:shadow-[0_20px_50px_rgba(234,179,8,0.5)] hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-tighter"
+                                    >
+                                        {lang === 'RU' ? "ЗАБРАТЬ ИГРУ" : "ОЙЫНДЫ АЛУ"}
+                                    </button>
+                                    <button 
+                                        onClick={() => setResult(null)}
+                                        className="text-zinc-500 hover:text-white font-bold uppercase tracking-widest text-xs transition-colors"
+                                    >
+                                        {lang === 'RU' ? "Закрыть" : "Жабу"}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </div>
+            );
+        };
+
+        const Navbar = ({ cartCount, onOpenCart, onOpenRegister, onOpenLogin, onResetSelection, lang, setLang, user, onLogout, onOpenSettings, onOpenInfo, onOpenRecharge, onOpenCase }) => {
+            const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+            const dropdownRef = useRef(null);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                        setIsDropdownOpen(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
+
             const handleConsultation = () => {
                 const message = lang === 'RU' ? "Саламатсыз ба! Консультация алғым келеді." : "Сәлеметсіз бе! Кеңес алғым келеді.";
                 const url = "https://api.whatsapp.com/send?phone=" + WHATSAPP_PHONE + "&text=" + encodeURIComponent(message);
@@ -96,6 +488,7 @@
                     <div className="hidden md:flex gap-8 text-xs font-semibold uppercase tracking-widest items-center">
                         <button onClick={(e) => scrollToSection(e, 'top')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">{lang === 'RU' ? 'Главная' : 'Басты бет'}</button>
                         <button onClick={onResetSelection} className="text-blue-400 hover:text-blue-300 transition-colors uppercase bg-transparent border-none cursor-pointer font-bold">{lang === 'RU' ? 'Выбор приставки' : 'Приставка таңдау'}</button>
+                        <button onClick={onOpenCase} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">{lang === 'RU' ? 'Кейсы' : 'Кейстер'}</button>
                         <button onClick={(e) => scrollToSection(e, 'trade-in')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">Trade In</button>
                         <button onClick={(e) => scrollToSection(e, 'reviews')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">{lang === 'RU' ? 'Отзывы' : 'Пікірлер'}</button>
                         <button onClick={(e) => scrollToSection(e, 'about')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">{lang === 'RU' ? 'О нас' : 'Біз туралы'}</button>
@@ -115,14 +508,61 @@
                         </button>
                         
                         {user ? (
-                            <div className="flex items-center gap-4">
-                                <span className="text-xs font-bold text-blue-400 hidden lg:block">{user.name}</span>
-                                <button 
-                                    onClick={onLogout}
-                                    className="text-gray-400 hover:text-red-500 transition-colors uppercase bg-transparent border-none cursor-pointer font-bold text-[10px]"
-                                >
-                                    {lang === 'RU' ? 'Выход' : 'Шығу'}
-                                </button>
+                            <div className="flex items-center gap-3">
+                                <div className="hidden sm:flex flex-col items-end mr-1">
+                                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{lang === 'RU' ? 'Баланс' : 'Баланс'}</div>
+                                    <div className="text-xs font-bold text-green-500">{(user.balance ?? 0).toLocaleString()} ₸</div>
+                                </div>
+                                <div className="relative" ref={dropdownRef}>
+                                    <button 
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="w-10 h-10 rounded-full border-2 border-blue-600 overflow-hidden hover:scale-105 transition-transform cursor-pointer bg-zinc-800 flex items-center justify-center"
+                                    >
+                                        {user.avatar ? (
+                                            <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                        )}
+                                    </button>
+                                    
+                                    {isDropdownOpen && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-in py-2">
+                                            <div className="px-4 py-2 border-b border-white/5 mb-2">
+                                                <div className="text-xs font-bold text-white truncate">{user.nickname || user.name}</div>
+                                                <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-0.5">{user.role || 'Новичок'}</div>
+                                                <div className="text-[10px] text-green-500 font-bold mt-1 sm:hidden">{(user.balance ?? 0).toLocaleString()} ₸</div>
+                                            </div>
+                                            <button 
+                                                onClick={() => { onOpenRecharge(); setIsDropdownOpen(false); }}
+                                                className="w-full text-left px-4 py-2 text-xs font-bold text-green-500 hover:bg-green-500/10 transition-colors flex items-center gap-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                                {lang === 'RU' ? 'Пополнить' : 'Толтыру'}
+                                            </button>
+                                            <button 
+                                                onClick={() => { onOpenSettings(); setIsDropdownOpen(false); }}
+                                                className="w-full text-left px-4 py-2 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                                                {lang === 'RU' ? 'Настройки' : 'Баптаулар'}
+                                            </button>
+                                            <button 
+                                                onClick={() => { onOpenInfo(); setIsDropdownOpen(false); }}
+                                                className="w-full text-left px-4 py-2 text-xs font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                                {lang === 'RU' ? 'Аккаунт' : 'Аккаунт'}
+                                            </button>
+                                            <button 
+                                                onClick={() => { onLogout(); setIsDropdownOpen(false); }}
+                                                className="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors flex items-center gap-2 mt-2 border-t border-white/5 pt-2"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                                {lang === 'RU' ? 'Выход' : 'Шығу'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ) : (
                             <div className="flex items-center gap-4">
@@ -277,7 +717,7 @@
             );
         };
 
-        const GameModal = ({ game, selectedPlatform, onClose, onAddToCart }) => {
+        const GameModal = ({ game, selectedPlatform, onClose, onAddToCart, lang }) => {
             const [isAdded, setIsAdded] = useState(false);
 
             if (!game) return null;
@@ -303,19 +743,27 @@
                         
                         <div className="w-full md:w-2/5 h-64 md:h-auto relative bg-zinc-800 shrink-0">
                             {game.image ? (
-                                <img src={game.image} alt={game.name} className="w-full h-full object-cover" />
+                                <img src={game.image} alt={game.name} className={`w-full h-full object-cover ${game.outOfStock ? 'grayscale' : ''}`} />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-white/20 font-bold">NO IMAGE</div>
+                                <div className={`w-full h-full flex items-center justify-center text-white/20 font-bold ${game.outOfStock ? 'grayscale' : ''}`}>NO IMAGE</div>
                             )}
-                            {game.isPreOrder && (
-                                <div className="absolute top-4 left-4 bg-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg z-10">
-                                    Предзаказ
+                            {game.outOfStock ? (
+                                <div className="absolute top-4 left-4 bg-zinc-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg z-10">
+                                    {lang === 'RU' ? 'Нет в наличии' : 'Қолда жоқ'}
                                 </div>
-                            )}
-                            {game.isSale && !game.isPreOrder && (
-                                <div className="absolute top-4 left-4 bg-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
-                                    Акция
-                                </div>
+                            ) : (
+                                <>
+                                    {game.isPreOrder && (
+                                        <div className="absolute top-4 left-4 bg-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg z-10">
+                                            Предзаказ
+                                        </div>
+                                    )}
+                                    {game.isSale && !game.isPreOrder && (
+                                        <div className="absolute top-4 left-4 bg-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                                            Акция
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </div>
                         
@@ -323,7 +771,7 @@
                             <div className={`mb-2 text-xs font-bold uppercase tracking-widest ${game.categories.includes('Подписки') ? 'text-yellow-500' : 'text-blue-400'}`}>
                                 {game.categories.includes('Подписки') ? `Подписки • ${selectedPlatform}` : game.categoryDisplay}
                             </div>
-                            <h2 className="text-3xl font-bold font-gaming uppercase tracking-tight mb-4">{game.name}</h2>
+                            <h2 className={`text-3xl font-bold font-gaming uppercase tracking-tight mb-4 ${game.outOfStock ? 'text-gray-500' : ''}`}>{game.name}</h2>
                             
                             <div className="flex-1 overflow-y-auto mb-6 pr-2 custom-scrollbar">
                                 {game.description ? (
@@ -338,24 +786,30 @@
                             <div className="mt-auto pt-6 border-t border-white/10 shrink-0">
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex flex-col">
-                                        {hasDiscount && (
+                                        {hasDiscount && !game.outOfStock && (
                                             <div className="flex items-center gap-2">
                                                 <span className="text-gray-500 line-through text-sm font-medium">{game.basePrice.toLocaleString()} ₸</span>
                                                 <span className="text-red-500 text-xs font-bold bg-red-500/10 px-1.5 py-0.5 rounded">-{game.discount}%</span>
                                             </div>
                                         )}
-                                        <span className="text-3xl font-bold text-white">{game.price.toLocaleString()} ₸</span>
+                                        <span className={`text-3xl font-bold ${game.outOfStock ? 'text-gray-600' : 'text-white'}`}>{game.price.toLocaleString()} ₸</span>
                                     </div>
                                     <div className="text-right">
                                         <p className="text-[10px] text-gray-500 uppercase tracking-tighter">В рассрочку</p>
-                                        <p className="text-sm font-bold text-red-500">{monthlyPrice.toLocaleString()} ₸ / мес</p>
+                                        <p className={`text-sm font-bold ${game.outOfStock ? 'text-gray-700' : 'text-red-500'}`}>{monthlyPrice.toLocaleString()} ₸ / мес</p>
                                     </div>
                                 </div>
                                 <button 
+                                    disabled={game.outOfStock}
                                     onClick={handleAddToCart}
-                                    className={`w-full py-4 rounded-xl font-bold uppercase tracking-widest transition-all cursor-pointer flex justify-center items-center gap-2 ${isAdded ? 'bg-green-500 text-white scale-105' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                                    className={`w-full py-4 rounded-xl font-bold uppercase tracking-widest transition-all cursor-pointer flex justify-center items-center gap-2 ${game.outOfStock ? 'bg-zinc-800 text-gray-500 cursor-not-allowed' : (isAdded ? 'bg-green-500 text-white scale-105' : 'bg-blue-600 hover:bg-blue-700 text-white')}`}
                                 >
-                                    {isAdded ? (
+                                    {game.outOfStock ? (
+                                        <>
+                                            {lang === 'RU' ? 'Нет в наличии' : 'Қолда жоқ'}
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                                        </>
+                                    ) : isAdded ? (
                                         <>
                                             Добавлено
                                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -374,7 +828,7 @@
             );
         };
 
-        const GameCard = ({ game, selectedPlatform, onAddToCart, onOpenModal }) => {
+        const GameCard = ({ game, selectedPlatform, onAddToCart, onOpenModal, lang }) => {
             const [isAdded, setIsAdded] = useState(false);
             const monthlyPrice = Math.round(game.price / 12);
             const hasDiscount = game.discount > 0;
@@ -387,13 +841,13 @@
             };
 
             return (
-                <div className="group bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:-translate-y-4 hover:border-blue-500/50 hover:shadow-[0_20px_50px_-10px_rgba(59,130,246,0.3)]">
+                <div className={`group bg-zinc-900/40 border border-white/5 rounded-[2.5rem] overflow-hidden transition-all duration-500 hover:-translate-y-4 hover:border-blue-500/50 hover:shadow-[0_20px_50px_-10px_rgba(59,130,246,0.3)] ${game.outOfStock ? 'opacity-75' : ''}`}>
                     <div className="h-80 overflow-hidden relative bg-zinc-800 cursor-pointer" onClick={() => onOpenModal(game)}>
                         {game.image ? (
                             <img 
                                 src={game.image} 
                                 alt={game.name}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${game.outOfStock ? 'grayscale' : ''}`}
                                 onError={(e) => {
                                     e.target.onerror = null; 
                                     e.target.style.display = 'none';
@@ -402,24 +856,32 @@
                                 }}
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-white/20 font-bold">NO IMAGE</div>
+                            <div className={`w-full h-full flex items-center justify-center text-white/20 font-bold ${game.outOfStock ? 'grayscale' : ''}`}>NO IMAGE</div>
                         )}
                         
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         
-                        {game.isPreOrder && (
-                            <div className="absolute top-6 left-6 bg-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg z-10">
-                                Предзаказ
+                        {game.outOfStock ? (
+                            <div className="absolute top-6 left-6 bg-zinc-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg z-10">
+                                {lang === 'RU' ? 'Нет в наличии' : 'Қолда жоқ'}
                             </div>
+                        ) : (
+                            <>
+                                {game.isPreOrder && (
+                                    <div className="absolute top-6 left-6 bg-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg z-10">
+                                        Предзаказ
+                                    </div>
+                                )}
+                                
+                                {game.isNew && !game.isPreOrder && (
+                                    <div className="absolute top-6 left-6 bg-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+                                        Новинка
+                                    </div>
+                                )}
+                            </>
                         )}
                         
-                        {game.isNew && !game.isPreOrder && (
-                            <div className="absolute top-6 left-6 bg-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
-                                Новинка
-                            </div>
-                        )}
-                        
-                        {game.isSale && (
+                        {game.isSale && !game.outOfStock && (
                             <div className="absolute top-6 right-6 bg-red-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
                                 Акция
                             </div>
@@ -434,7 +896,7 @@
 
                     <div className="p-8">
                         <h3 
-                            className="text-2xl font-bold mb-4 font-gaming tracking-wide text-white group-hover:text-blue-400 transition-colors line-clamp-2 min-h-[4rem] cursor-pointer"
+                            className={`text-2xl font-bold mb-4 font-gaming tracking-wide text-white group-hover:text-blue-400 transition-colors line-clamp-2 min-h-[4rem] cursor-pointer ${game.outOfStock ? 'text-gray-500' : ''}`}
                             onClick={() => onOpenModal(game)}
                         >
                             {game.name}
@@ -442,25 +904,31 @@
                         
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex flex-col">
-                                {hasDiscount && (
+                                {hasDiscount && !game.outOfStock && (
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500 line-through text-sm font-medium">{game.basePrice.toLocaleString()} ₸</span>
                                         <span className="text-red-500 text-xs font-bold bg-red-500/10 px-1.5 py-0.5 rounded">-{game.discount}%</span>
                                     </div>
                                 )}
-                                <span className="text-3xl font-bold text-white">{game.price.toLocaleString()} ₸</span>
+                                <span className={`text-3xl font-bold ${game.outOfStock ? 'text-gray-600' : 'text-white'}`}>{game.price.toLocaleString()} ₸</span>
                             </div>
                             <div className="text-right">
                                 <p className="text-[10px] text-gray-500 uppercase tracking-tighter">В рассрочку</p>
-                                <p className="text-sm font-bold text-red-500">{monthlyPrice.toLocaleString()} ₸ / мес</p>
+                                <p className={`text-sm font-bold ${game.outOfStock ? 'text-gray-700' : 'text-red-500'}`}>{monthlyPrice.toLocaleString()} ₸ / мес</p>
                             </div>
                         </div>
 
                         <button 
+                            disabled={game.outOfStock}
                             onClick={handleAddToCart}
-                            className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs active:scale-95 cursor-pointer ${isAdded ? 'bg-green-500 text-white scale-105' : 'bg-white text-black hover:bg-blue-600 hover:text-white'}`}
+                            className={`w-full py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs active:scale-95 cursor-pointer ${game.outOfStock ? 'bg-zinc-800 text-gray-500 cursor-not-allowed' : (isAdded ? 'bg-green-500 text-white scale-105' : 'bg-white text-black hover:bg-blue-600 hover:text-white')}`}
                         >
-                            {isAdded ? (
+                            {game.outOfStock ? (
+                                <>
+                                    {lang === 'RU' ? 'Нет в наличии' : 'Қолда жоқ'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                                </>
+                            ) : isAdded ? (
                                 <>
                                     Добавлено
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -790,7 +1258,9 @@
 
         const RegisterModal = ({ isOpen, onClose, onRegister, onSwitchToLogin, lang }) => {
             const [name, setName] = useState('');
+            const [nickname, setNickname] = useState('');
             const [email, setEmail] = useState('');
+            const [phone, setPhone] = useState('');
             const [password, setPassword] = useState('');
             const [confirmPassword, setConfirmPassword] = useState('');
             const [isSubmitting, setIsSubmitting] = useState(false);
@@ -815,13 +1285,15 @@
                 setStatus({ type: '', message: '' });
 
                 try {
-                    const response = await onRegister({ name, email, password });
+                    const response = await onRegister({ name, nickname, email, phone, password });
                     if (response.status === 'success') {
                         setStatus({ type: 'success', message: response.message });
                         setTimeout(() => {
                             onClose();
                             setName('');
+                            setNickname('');
                             setEmail('');
+                            setPhone('');
                             setPassword('');
                             setConfirmPassword('');
                             setStatus({ type: '', message: '' });
@@ -839,7 +1311,7 @@
             return (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-8 animate-fade-in shadow-2xl">
+                    <div className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-8 animate-fade-in shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
                         <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-white transition-colors cursor-pointer">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
@@ -849,16 +1321,29 @@
                         </h2>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Имя' : 'Аты'}</label>
-                                <input 
-                                    required
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder={lang === 'RU' ? "Ваше имя" : "Сіздің атыңыз"}
-                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Имя' : 'Аты'}</label>
+                                    <input 
+                                        required
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder={lang === 'RU' ? "Имя" : "Аты"}
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Никнейм' : 'Никнейм'}</label>
+                                    <input 
+                                        required
+                                        type="text"
+                                        value={nickname}
+                                        onChange={(e) => setNickname(e.target.value)}
+                                        placeholder="Gamer123"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Email</label>
@@ -868,6 +1353,17 @@
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="example@mail.com"
+                                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Телефон' : 'Телефон'}</label>
+                                <input 
+                                    required
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="+7 (___) ___"
                                     className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
                                 />
                             </div>
@@ -917,6 +1413,315 @@
                                 {lang === 'RU' ? 'Уже есть аккаунт? Войти' : 'Аккаунтыңыз бар ма? Кіру'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SettingsModal = ({ isOpen, onClose, user, onUpdateProfile, lang }) => {
+            const [activeTab, setActiveTab] = useState('profile');
+            const [formData, setFormData] = useState({
+                name: user?.name || '',
+                nickname: user?.nickname || '',
+                email: user?.email || '',
+                phone: user?.phone || '',
+                avatar: user?.avatar || '',
+                password: '',
+                newPassword: ''
+            });
+            const [isUpdating, setIsUpdating] = useState(false);
+            const [status, setStatus] = useState({ type: '', message: '' });
+
+            useEffect(() => {
+                if (user) {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: user.name,
+                        nickname: user.nickname,
+                        email: user.email,
+                        phone: user.phone,
+                        avatar: user.avatar
+                    }));
+                }
+            }, [user]);
+
+            if (!isOpen) return null;
+
+            const handleInputChange = (e) => {
+                const { name, value } = e.target;
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsUpdating(true);
+                setStatus({ type: '', message: '' });
+                try {
+                    const response = await onUpdateProfile(formData);
+                    if (response.status === 'success') {
+                        setStatus({ type: 'success', message: response.message });
+                        setFormData(prev => ({ ...prev, password: '', newPassword: '' }));
+                    } else {
+                        setStatus({ type: 'error', message: response.message });
+                    }
+                } catch (error) {
+                    setStatus({ type: 'error', message: lang === 'RU' ? 'Ошибка при обновлении' : 'Жаңарту кезінде қате кетті' });
+                } finally {
+                    setIsUpdating(false);
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full max-w-2xl bg-zinc-900 border border-white/10 rounded-3xl p-8 animate-fade-in shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-white transition-colors cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+
+                        <div className="flex gap-8 mb-8 border-b border-white/10">
+                            <button 
+                                onClick={() => setActiveTab('profile')}
+                                className={`pb-4 text-xs font-bold uppercase tracking-widest transition-colors relative ${activeTab === 'profile' ? 'text-blue-500' : 'text-gray-500 hover:text-white'}`}
+                            >
+                                {lang === 'RU' ? 'Настройки' : 'Баптаулар'}
+                                {activeTab === 'profile' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500"></div>}
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="flex items-center gap-6 mb-8">
+                                <div className="w-24 h-24 rounded-full border-4 border-blue-600 overflow-hidden bg-zinc-800 flex items-center justify-center shrink-0">
+                                    {formData.avatar ? (
+                                        <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Ссылка на аватар' : 'Аватар сілтемесі'}</label>
+                                    <input 
+                                        type="url"
+                                        name="avatar"
+                                        value={formData.avatar}
+                                        onChange={handleInputChange}
+                                        placeholder="https://example.com/avatar.jpg"
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Имя' : 'Аты'}</label>
+                                    <input 
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleInputChange}
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Никнейм' : 'Никнейм'}</label>
+                                    <input 
+                                        type="text"
+                                        name="nickname"
+                                        value={formData.nickname}
+                                        onChange={handleInputChange}
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">Email</label>
+                                    <input 
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleInputChange}
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Телефон' : 'Телефон'}</label>
+                                    <input 
+                                        type="tel"
+                                        name="phone"
+                                        value={formData.phone}
+                                        onChange={handleInputChange}
+                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-6 border-t border-white/10">
+                                <h4 className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-4">{lang === 'RU' ? 'Смена пароля' : 'Құпия сөзді өзгерту'}</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Текущий пароль' : 'Қазіргі құпия сөз'}</label>
+                                        <input 
+                                            type="password"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                            placeholder="••••••••"
+                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Новый пароль' : 'Жаңа құпия сөз'}</label>
+                                        <input 
+                                            type="password"
+                                            name="newPassword"
+                                            value={formData.newPassword}
+                                            onChange={handleInputChange}
+                                            placeholder="••••••••"
+                                            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {status.message && (
+                                <div className={`p-4 rounded-xl text-sm font-bold ${status.type === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
+                                    {status.message}
+                                </div>
+                            )}
+
+                            <button 
+                                disabled={isUpdating}
+                                type="submit"
+                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold py-4 rounded-xl transition-all active:scale-95 uppercase tracking-widest text-xs shadow-lg shadow-blue-600/20"
+                            >
+                                {isUpdating ? (lang === 'RU' ? 'Загрузка...' : 'Жүктелуде...') : (lang === 'RU' ? 'Сохранить изменения' : 'Өзгерістерді сақтау')}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const InfoModal = ({ isOpen, onClose, user, lang }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-8 animate-fade-in shadow-2xl">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-white transition-colors cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                        <h2 className="text-3xl font-bold font-gaming uppercase mb-6 text-center">{lang === 'RU' ? 'Аккаунт' : 'Аккаунт'}</h2>
+                        
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="w-24 h-24 rounded-full border-4 border-blue-600 overflow-hidden bg-zinc-800 flex items-center justify-center mb-4">
+                                {user?.avatar ? (
+                                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                )}
+                            </div>
+                            <h3 className="text-xl font-bold font-gaming uppercase">{user?.nickname || user?.name}</h3>
+                            <div className="text-blue-400 font-bold text-xs uppercase tracking-widest mt-1">{user?.role || 'Новичок'}</div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                                <div className="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">ID</div>
+                                <div className="text-sm font-bold">{user?.id || '—'}</div>
+                            </div>
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                                <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1">{lang === 'RU' ? 'Баланс' : 'Баланс'}</div>
+                                <div className="text-sm font-bold">{user?.balance || 0} ₸</div>
+                            </div>
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{lang === 'RU' ? 'Имя' : 'Аты'}</div>
+                                <div className="text-sm font-bold">{user?.name}</div>
+                            </div>
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Email</div>
+                                <div className="text-sm font-bold">{user?.email}</div>
+                            </div>
+                            <div className="bg-white/5 p-4 rounded-xl border border-white/10">
+                                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{lang === 'RU' ? 'Телефон' : 'Телефон'}</div>
+                                <div className="text-sm font-bold">{user?.phone || '—'}</div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 text-center text-gray-500 text-[10px] uppercase tracking-widest font-bold">
+                            {lang === 'RU' ? 'DalaGame Community Member' : 'DalaGame қауымдастығының мүшесі'}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const RechargeModal = ({ isOpen, onClose, user, lang }) => {
+            const [customAmount, setCustomAmount] = useState('');
+            const WHATSAPP_PHONE = '77066386792';
+
+            if (!isOpen) return null;
+
+            const handleRecharge = (amount) => {
+                const userId = user?.id || 'Unknown';
+                const message = lang === 'RU' 
+                    ? `Здравствуйте! Хочу пополнить баланс на сумму ${amount} ₸. Мой ID: ${userId}` 
+                    : `Сәлеметсіз бе! Балансты ${amount} ₸ сомасына толтырғым келеді. Менің ID: ${userId}`;
+                window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`, '_blank');
+                onClose();
+            };
+
+            return (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-8 animate-fade-in shadow-2xl">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full text-white transition-colors cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                        
+                        <h2 className="text-3xl font-bold font-gaming uppercase mb-6 text-center">
+                            {lang === 'RU' ? 'Пополнение баланса' : 'Балансты толтыру'}
+                        </h2>
+
+                        <div className="grid grid-cols-1 gap-4 mb-6">
+                            {[5000, 10000, 15000].map(amount => (
+                                <button 
+                                    key={amount}
+                                    onClick={() => handleRecharge(amount)}
+                                    className="w-full bg-white/5 border border-white/10 hover:border-blue-500 hover:bg-blue-600/10 p-4 rounded-2xl transition-all group flex justify-between items-center cursor-pointer"
+                                >
+                                    <span className="text-xl font-bold font-gaming">{amount} ₸</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500 group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                                {lang === 'RU' ? 'Своя сумма' : 'Өз сомаңыз'}
+                            </label>
+                            <div className="flex gap-2">
+                                <input 
+                                    type="number"
+                                    value={customAmount}
+                                    onChange={(e) => setCustomAmount(e.target.value)}
+                                    placeholder="500"
+                                    className="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                />
+                                <button 
+                                    onClick={() => customAmount && handleRecharge(customAmount)}
+                                    disabled={!customAmount}
+                                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white font-bold px-6 rounded-xl transition-all active:scale-95 uppercase tracking-widest text-[10px]"
+                                >
+                                    {lang === 'RU' ? 'Ок' : 'Ок'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <p className="mt-8 text-[10px] text-gray-500 text-center uppercase tracking-widest leading-relaxed">
+                            {lang === 'RU' 
+                                ? 'После нажатия вы будете перенаправлены в WhatsApp для завершения оплаты' 
+                                : 'Басқаннан кейін төлемді аяқтау үшін WhatsApp-қа бағытталасыз'}
+                        </p>
                     </div>
                 </div>
             );
@@ -1019,6 +1824,46 @@
             );
         };
 
+        // --- UTILS ---
+        const parseCSV = (csvText) => {
+            const rows = [];
+            let currentRow = [];
+            let currentField = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < csvText.length; i++) {
+                const char = csvText[i];
+                const nextChar = csvText[i + 1];
+                
+                if (char === '"') {
+                    if (inQuotes && nextChar === '"') {
+                        currentField += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    currentRow.push(currentField.trim());
+                    currentField = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    if (currentField || currentRow.length > 0) {
+                        currentRow.push(currentField.trim());
+                        if (currentRow.some(c => c !== '')) rows.push(currentRow);
+                        currentRow = [];
+                        currentField = '';
+                    }
+                    if (char === '\r' && nextChar === '\n') i++;
+                } else {
+                    currentField += char;
+                }
+            }
+            if (currentField || currentRow.length > 0) {
+                currentRow.push(currentField.trim());
+                if (currentRow.some(c => c !== '')) rows.push(currentRow);
+            }
+            return rows;
+        };
+
         const App = () => {
             const [lang, setLang] = useState('RU');
             const [selectedCategories, setSelectedCategories] = useState(['Все']);
@@ -1051,6 +1896,9 @@
             const resetSelection = () => {
                 setSelectedPlatform(null);
                 setSelectionStep(1);
+                setActiveView(null);
+                setSearchQuery('');
+                setSelectedCategories(['Все']);
                 setTimeout(() => {
                     const section = document.getElementById('catalog');
                     if (section) section.scrollIntoView({ behavior: 'smooth' });
@@ -1061,8 +1909,42 @@
             const [isCartOpen, setIsCartOpen] = useState(false);
             const [isRegisterOpen, setIsRegisterOpen] = useState(false);
             const [isLoginOpen, setIsLoginOpen] = useState(false);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [isInfoOpen, setIsInfoOpen] = useState(false);
+            const [isRechargeOpen, setIsRechargeOpen] = useState(false);
             const [user, setUser] = useState(null);
             const [selectedGame, setSelectedGame] = useState(null);
+
+            const fetchWithTimeout = async (url, name) => {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+                try {
+                    // Используем максимально простой fetch без лишних заголовков для Google Sheets
+                    const res = await fetch(url, {
+                        method: 'GET',
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    
+                    const text = await res.text();
+                    if (text.trim().startsWith('<html') || text.trim().startsWith('<!DOCTYPE')) {
+                        throw new Error("HTML_RESPONSE");
+                    }
+                    return text;
+                } catch (e) {
+                    clearTimeout(timeoutId);
+                    console.error(`[Fetch Error] ${name}:`, e);
+                    
+                    if (e.name === 'AbortError') throw new Error("Тайм-аут (медленный интернет)");
+                    if (e.message === "HTML_RESPONSE") throw new Error("Лист не опубликован как CSV");
+                    
+                    throw new Error("Ошибка сети или блокировка CORS. Проверьте публикацию таблицы.");
+                }
+            };
 
             // Load user from localStorage on mount
             useEffect(() => {
@@ -1075,6 +1957,61 @@
                     }
                 }
             }, []);
+
+            // Real-time balance sync from Google Apps Script (More reliable than CSV)
+            useEffect(() => {
+                if (!user || !user.email) return;
+
+                const syncBalance = async () => {
+                    // Если была ручная прокрутка недавно, не синхронизируем, чтобы не перезаписать старыми данными
+                    if (window.lastManualBalanceUpdate && (Date.now() - window.lastManualBalanceUpdate < 15000)) {
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(REGISTER_SCRIPT_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                action: 'getBalance',
+                                email: user.email
+                            })
+                        });
+                        
+                        if (!response.ok) return;
+                        
+                        const data = await response.json();
+                        
+                        if ((data.status === 'success' || data.success) && data.balance !== undefined) {
+                            const newBalance = parseFloat(data.balance);
+                            
+                            if (isNaN(newBalance)) return;
+
+                            setUser(prev => {
+                                if (!prev) return null;
+                                // Если баланс не изменился, не обновляем стейт
+                                if (prev.balance === newBalance) return prev;
+                                
+                                // Если была ручная прокрутка недавно, не синхронизируем
+                                if (window.lastManualBalanceUpdate && (Date.now() - window.lastManualBalanceUpdate < 15000)) return prev;
+                                
+                                console.log(`[Баланс] Обновлен через API: ${newBalance} (было ${prev.balance})`);
+                                const updated = { ...prev, balance: newBalance };
+                                localStorage.setItem('dalagame_user', JSON.stringify(updated));
+                                return updated;
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Ошибка синхронизации баланса через API:", e.message);
+                    }
+                };
+
+                // Initial sync
+                syncBalance();
+
+                // Periodic sync every 15 seconds (less frequent to avoid rate limits)
+                const interval = setInterval(syncBalance, 15000);
+                return () => clearInterval(interval);
+            }, [user?.email, user?.id]);
 
             const handleCategoryToggle = (cat) => {
                 if (cat === 'Все') {
@@ -1098,55 +2035,13 @@
                 const fetchData = async () => {
                     try {
                         console.log('Начало загрузки данных...');
-                        const [gamesRes, descRes] = await Promise.all([
-                            fetch(SHEET_URL),
-                            fetch(DESC_SHEET_URL)
+                        
+                        const [gamesData, descData] = await Promise.all([
+                            fetchWithTimeout(SHEET_URL, 'Игры'),
+                            fetchWithTimeout(DESC_SHEET_URL, 'Описания')
                         ]);
                         
-                        console.log('Статус ответа игр:', gamesRes.status);
-                        console.log('Статус ответа описаний:', descRes.status);
-
-                        const gamesData = await gamesRes.text();
-                        const descData = await descRes.text();
-                        
-                        console.log('Первые 50 символов данных игр:', gamesData.substring(0, 50));
-                        
-                        // Проверка на ошибку (если вернулся HTML вместо CSV)
-                        if (gamesData.trim().startsWith('<') || gamesRes.status >= 400) {
-                            console.error('Получен HTML или ошибка вместо CSV. Проверьте публикацию таблицы.');
-                            setError('Ошибка синхронизации: Google Таблица не опубликована или ссылка неверна. Пожалуйста, проверьте настройки доступа таблицы.');
-                            setLoading(false);
-                            return;
-                        }
-
-                        // Парсим CSV с учетом переносов строк в кавычках
-                        const parseCSV = (text) => {
-                            const result = [];
-                            let row = [];
-                            let col = '';
-                            let inQuotes = false;
-                            for (let i = 0; i < text.length; i++) {
-                                const char = text[i];
-                                if (char === '"') {
-                                    inQuotes = !inQuotes;
-                                } else if (char === ',' && !inQuotes) {
-                                    row.push(col.trim());
-                                    col = '';
-                                } else if (char === '\n' && !inQuotes) {
-                                    row.push(col.trim());
-                                    if (row.some(c => c !== '')) result.push(row);
-                                    row = [];
-                                    col = '';
-                                } else if (char !== '\r') {
-                                    col += char;
-                                }
-                            }
-                            if (col !== '' || row.length > 0) {
-                                row.push(col.trim());
-                                if (row.some(c => c !== '')) result.push(row);
-                            }
-                            return result;
-                        };
+                        console.log('Данные успешно получены');
                         
                         // Парсим CSV описаний и подписок
                         const descRows = parseCSV(descData).slice(1);
@@ -1247,6 +2142,9 @@
                                 }
                             }
 
+                            // Проверка на наличие (Колонка AF - индекс 31)
+                            const outOfStock = !!(cols[31] && cols[31].trim() !== '');
+
                             // Для отображения на карточке объединяем через разделитель
                             const categoryDisplay = categories.join(' • ');
 
@@ -1265,6 +2163,7 @@
                                 description, // Описание игры
                                 isNew: index < 3,
                                 isPreOrder: isPreOrder,
+                                outOfStock: outOfStock,
                                 discountPS4,
                                 discountPS5
                             };
@@ -1283,7 +2182,7 @@
                         setLoading(false);
                     } catch (error) {
                         console.error("Error fetching sheet:", error);
-                        setError('Ошибка сети при загрузке данных. Проверьте подключение к интернету.');
+                        setError(`Не удалось загрузить данные из Google Таблицы: ${error.message}. Пожалуйста, убедитесь, что таблица опубликована как CSV и у вас есть интернет.`);
                         setLoading(false);
                     }
                 };
@@ -1370,49 +2269,131 @@
 
             const handleRegister = async (userData) => {
                 try {
+                    // Генерируем 6-значный случайный ID
+                    const randomId = Math.floor(100000 + Math.random() * 900000).toString();
+                    const dataWithId = { ...userData, id: randomId };
+
+                    console.log("Attempting registration with URL:", REGISTER_SCRIPT_URL);
+                    
                     const response = await fetch(REGISTER_SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ ...userData, action: 'register' })
+                        body: JSON.stringify({ action: 'register', ...dataWithId })
                     });
-                    const result = await response.json();
                     
-                    if (result.status === 'success') {
-                        // Automatically log in after registration
-                        const newUser = { name: userData.name, email: userData.email };
-                        setUser(newUser);
-                        localStorage.setItem('dalagame_user', JSON.stringify(newUser));
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
-                    return result;
+                    const result = await response.json();
+                    console.log("Registration result:", result);
+                    
+                    // Преобразуем success в status для совместимости с UI
+                    const finalResult = {
+                        ...result,
+                        status: result.success ? 'success' : 'error'
+                    };
+
+                    if (finalResult.status === 'success' && finalResult.user) {
+                        // Automatically log in after registration
+                        setUser(finalResult.user);
+                        localStorage.setItem('dalagame_user', JSON.stringify(finalResult.user));
+                    }
+                    
+                    return finalResult;
                 } catch (error) {
-                    console.error("Registration error:", error);
-                    throw error;
+                    console.error("Registration error details:", error);
+                    let msg = error.message || "Ошибка регистрации";
+                    if (msg === "Failed to fetch") {
+                        msg = "Ошибка сети (Failed to fetch). Убедитесь, что ссылка на скрипт верна, он развернут как 'Веб-приложение' и доступ открыт для 'Всех' (Anyone).";
+                    }
+                    return { status: 'error', message: msg };
                 }
             };
 
             const handleLogin = async (credentials) => {
                 try {
+                    console.log("Attempting login with URL:", REGISTER_SCRIPT_URL);
+                    
                     const response = await fetch(REGISTER_SCRIPT_URL, {
                         method: 'POST',
                         body: JSON.stringify({ ...credentials, action: 'login' })
                     });
-                    const result = await response.json();
                     
-                    if (result.status === 'success') {
-                        setUser(result.user);
-                        localStorage.setItem('dalagame_user', JSON.stringify(result.user));
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
-                    return result;
+                    const result = await response.json();
+                    console.log("Login result:", result);
+                    
+                    // Преобразуем success в status для совместимости с UI
+                    const finalResult = {
+                        ...result,
+                        status: result.success ? 'success' : 'error'
+                    };
+
+                    if (finalResult.status === 'success' && finalResult.user) {
+                        setUser(finalResult.user);
+                        localStorage.setItem('dalagame_user', JSON.stringify(finalResult.user));
+                    }
+                    
+                    return finalResult;
                 } catch (error) {
-                    console.error("Login error:", error);
-                    throw error;
+                    console.error("Login error details:", error);
+                    let msg = error.message || "Ошибка входа";
+                    if (msg === "Failed to fetch") {
+                        msg = "Ошибка сети (Failed to fetch). Проверьте ссылку на скрипт и доступ 'Anyone'.";
+                    }
+                    return { status: 'error', message: msg };
                 }
             };
 
             const handleLogout = () => {
                 setUser(null);
                 localStorage.removeItem('dalagame_user');
+            };
+
+            const handleUpdateProfile = async (formData) => {
+                try {
+                    const response = await fetch(REGISTER_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            action: 'updateProfile', 
+                            email: user.email, 
+                            ...formData 
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    // Преобразуем success в status для совместимости с UI
+                    const finalResult = {
+                        ...result,
+                        status: result.success ? 'success' : (result.status || 'error')
+                    };
+
+                    if (finalResult.status === 'success') {
+                        const updatedUser = { 
+                            ...user, 
+                            name: formData.name,
+                            nickname: formData.nickname,
+                            email: formData.email,
+                            phone: formData.phone,
+                            avatar: formData.avatar
+                        };
+                        setUser(updatedUser);
+                        localStorage.setItem('dalagame_user', JSON.stringify(updatedUser));
+                    }
+                    
+                    return finalResult;
+                } catch (error) {
+                    console.error("Update profile error details:", error);
+                    return { status: 'error', message: error.message || "Ошибка обновления профиля" };
+                }
             };
 
             return (
@@ -1433,6 +2414,16 @@
                         setLang={setLang} 
                         user={user}
                         onLogout={handleLogout}
+                        onOpenSettings={() => setIsSettingsOpen(true)}
+                        onOpenInfo={() => setIsInfoOpen(true)}
+                        onOpenRecharge={() => setIsRechargeOpen(true)}
+                        onOpenCase={() => {
+                            setSelectionStep(1);
+                            setActiveView(null);
+                            setTimeout(() => {
+                                document.getElementById('case-section')?.scrollIntoView({ behavior: 'smooth' });
+                            }, 100);
+                        }}
                     />
                     <Cart 
                         isOpen={isCartOpen} 
@@ -1442,6 +2433,7 @@
                         onCheckout={checkoutCart} 
                         lang={lang}
                     />
+
                     <RegisterModal 
                         isOpen={isRegisterOpen}
                         onClose={() => setIsRegisterOpen(false)}
@@ -1462,11 +2454,31 @@
                         }}
                         lang={lang}
                     />
+                    <SettingsModal 
+                        isOpen={isSettingsOpen}
+                        onClose={() => setIsSettingsOpen(false)}
+                        user={user}
+                        onUpdateProfile={handleUpdateProfile}
+                        lang={lang}
+                    />
+                    <InfoModal 
+                        isOpen={isInfoOpen}
+                        onClose={() => setIsInfoOpen(false)}
+                        user={user}
+                        lang={lang}
+                    />
+                    <RechargeModal 
+                        isOpen={isRechargeOpen}
+                        onClose={() => setIsRechargeOpen(false)}
+                        user={user}
+                        lang={lang}
+                    />
                     <GameModal 
                         game={selectedGame} 
                         selectedPlatform={selectedPlatform} 
                         onClose={() => setSelectedGame(null)} 
                         onAddToCart={addToCart} 
+                        lang={lang}
                     />
                     <Hero descriptions={descriptions} loading={loading} lang={lang} />
 
@@ -1505,6 +2517,34 @@
                                         </div>
                                         <h3 className="text-3xl font-bold font-gaming uppercase tracking-widest">PlayStation 5</h3>
                                     </button>
+                                </div>
+
+                                {/* Case Section in Step 1 */}
+                                <div id="case-section" className="mt-12 w-full max-w-4xl">
+                                    <CaseOpening 
+                                        user={user} 
+                                        lang={lang} 
+                                        games={games} 
+                                        onSpinStart={(cost) => {
+                                            setUser(prev => {
+                                                if (!prev) return null;
+                                                const updated = { ...prev, balance: (prev.balance ?? 0) - cost };
+                                                localStorage.setItem('dalagame_user', JSON.stringify(updated));
+                                                return updated;
+                                            });
+                                            window.lastManualBalanceUpdate = Date.now();
+                                        }} 
+                                        onWin={(amount, isTotal = false) => {
+                                            setUser(prev => {
+                                                if (!prev) return null;
+                                                const newBalance = isTotal ? amount : (prev.balance ?? 0) + amount;
+                                                const updated = { ...prev, balance: newBalance };
+                                                localStorage.setItem('dalagame_user', JSON.stringify(updated));
+                                                return updated;
+                                            });
+                                            window.lastManualBalanceUpdate = Date.now();
+                                        }}
+                                    />
                                 </div>
                             </div>
                         ) : selectionStep === 2 ? (
@@ -1653,6 +2693,7 @@
                                                     selectedPlatform={selectedPlatform}
                                                     onAddToCart={addToCart} 
                                                     onOpenModal={setSelectedGame}
+                                                    lang={lang}
                                                 />
                                             ))
                                         ) : (
@@ -1724,6 +2765,7 @@
                                                 selectedPlatform={selectedPlatform}
                                                 onAddToCart={addToCart} 
                                                 onOpenModal={setSelectedGame}
+                                                lang={lang}
                                             />
                                         );
                                     })}
