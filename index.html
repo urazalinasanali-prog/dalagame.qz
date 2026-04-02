@@ -117,7 +117,7 @@
             }, []);
 
             const CASE_COST = 10000;
-            const WHATSAPP_PHONE = "77074044434";
+            const WHATSAPP_PHONE = "77066386792";
 
             const RANGES = [
                 { 
@@ -374,6 +374,25 @@
                         </div>
                     </div>
 
+                    {!result && (
+                        <div className="flex flex-col items-center gap-6 mb-12">
+                            <button 
+                                onClick={handleSpin}
+                                disabled={spinning}
+                                className={`group relative bg-blue-600 hover:bg-blue-700 text-white px-16 py-6 rounded-3xl font-black text-2xl transition-all shadow-[0_10px_40px_rgba(37,99,235,0.4)] hover:shadow-[0_15px_50px_rgba(37,99,235,0.6)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 cursor-pointer overflow-hidden`}
+                            >
+                                <span className="relative z-10">
+                                    {spinning ? (lang === 'RU' ? 'КРУТИМ...' : 'АЙНАЛУДА...') : (lang === 'RU' ? 'ОТКРЫТЬ КЕЙС' : 'КЕЙСТІ АШУ')}
+                                </span>
+                                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                            </button>
+                            {error && (
+                                <p className="text-red-500 font-bold text-lg animate-fade-in">{error}</p>
+                            )}
+                            <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest">Шансы: 85% / 10% / 4% / 1%</p>
+                        </div>
+                    )}
+
                     <div className="max-w-4xl mx-auto mb-12 text-center">
                         <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-6 px-4">
                             {lang === 'RU' ? "Каждый кейс — шанс забрать игру дороже, чем ты заплатил" : "Әрбір кейс — сіз төлегеннен қымбат ойынды алу мүмкіндігі"}
@@ -439,24 +458,7 @@
                         </div>
                     </div>
 
-                    {!result ? (
-                        <div className="flex flex-col items-center gap-6">
-                            <button 
-                                onClick={handleSpin}
-                                disabled={spinning}
-                                className={`group relative bg-blue-600 hover:bg-blue-700 text-white px-16 py-6 rounded-3xl font-black text-2xl transition-all shadow-[0_10px_40px_rgba(37,99,235,0.4)] hover:shadow-[0_15px_50px_rgba(37,99,235,0.6)] hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 cursor-pointer overflow-hidden`}
-                            >
-                                <span className="relative z-10">
-                                    {spinning ? (lang === 'RU' ? 'КРУТИМ...' : 'АЙНАЛУДА...') : (lang === 'RU' ? 'ОТКРЫТЬ КЕЙС' : 'КЕЙСТІ АШУ')}
-                                </span>
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shimmer"></div>
-                            </button>
-                            {error && (
-                                <p className="text-red-500 font-bold text-lg animate-fade-in">{error}</p>
-                            )}
-                            <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest">Шансы: 85% / 10% / 4% / 1%</p>
-                        </div>
-                    ) : (
+                    {result && (
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.5, y: 50 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -503,12 +505,6 @@
                                         className="w-full bg-gradient-to-r from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black py-6 rounded-2xl font-black text-xl transition-all shadow-[0_15px_40px_rgba(234,179,8,0.3)] hover:shadow-[0_20px_50px_rgba(234,179,8,0.5)] hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-tighter"
                                     >
                                         {lang === 'RU' ? "ЗАБРАТЬ ИГРУ" : "ОЙЫНДЫ АЛУ"}
-                                    </button>
-                                    <button 
-                                        onClick={() => setResult(null)}
-                                        className="text-zinc-500 hover:text-white font-bold uppercase tracking-widest text-xs transition-colors"
-                                    >
-                                        {lang === 'RU' ? "Закрыть" : "Жабу"}
                                     </button>
                                 </div>
                             </div>
@@ -1535,16 +1531,43 @@
             const handleFileChange = (e) => {
                 const file = e.target.files[0];
                 if (file) {
-                    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                    if (file.size > 5 * 1024 * 1024) { // 5MB limit for selection
                         setStatus({ 
                             type: 'error', 
-                            message: lang === 'RU' ? 'Файл слишком большой (макс. 2МБ)' : 'Файл тым үлкен (макс. 2МБ)' 
+                            message: lang === 'RU' ? 'Файл слишком большой (макс. 5МБ)' : 'Файл тым үлкен (макс. 5МБ)' 
                         });
                         return;
                     }
                     const reader = new FileReader();
-                    reader.onloadend = () => {
-                        setFormData(prev => ({ ...prev, avatar: reader.result }));
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 200;
+                            const MAX_HEIGHT = 200;
+                            let width = img.width;
+                            let height = img.height;
+
+                            if (width > height) {
+                                if (width > MAX_WIDTH) {
+                                    height *= MAX_WIDTH / width;
+                                    width = MAX_WIDTH;
+                                }
+                            } else {
+                                if (height > MAX_HEIGHT) {
+                                    width *= MAX_HEIGHT / height;
+                                    height = MAX_HEIGHT;
+                                }
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // Compress to JPEG
+                            setFormData(prev => ({ ...prev, avatar: dataUrl }));
+                        };
+                        img.src = event.target.result;
                     };
                     reader.readAsDataURL(file);
                 }
@@ -2498,13 +2521,16 @@
 
             const handleUpdateProfile = async (formData) => {
                 try {
+                    const payload = JSON.stringify({ 
+                        action: 'updateProfile', 
+                        email: user.email, 
+                        ...formData 
+                    });
+                    console.log("Updating profile, payload size:", (payload.length / 1024).toFixed(2), "KB");
+                    
                     const response = await fetch(REGISTER_SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ 
-                            action: 'updateProfile', 
-                            email: user.email, 
-                            ...formData 
-                        })
+                        body: payload
                     });
                     
                     if (!response.ok) {
@@ -2535,7 +2561,11 @@
                     return finalResult;
                 } catch (error) {
                     console.error("Update profile error details:", error);
-                    return { status: 'error', message: error.message || "Ошибка обновления профиля" };
+                    let msg = error.message || "Ошибка обновления профиля";
+                    if (msg === "Failed to fetch") {
+                        msg = "Ошибка сети (Failed to fetch). Проверьте интернет-соединение или размер файла аватара. Если вы используете VPN, попробуйте отключить его.";
+                    }
+                    return { status: 'error', message: msg };
                 }
             };
 
