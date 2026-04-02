@@ -13,8 +13,8 @@ function doPost(e) {
     // Create sheet if it doesn't exist
     if (!sheet) {
       sheet = ss.insertSheet("Users");
-      sheet.appendRow(["Имя", "Email", "Пароль", "Дата регистрации", "Телефон", "Никнейм", "Роль", "Баланс", "Аватар", "ID"]);
-      sheet.getRange(1, 1, 1, 10).setFontWeight("bold").setBackground("#f3f3f3");
+      sheet.appendRow(["Имя", "Email", "Пароль", "Дата регистрации", "Телефон", "Никнейм", "Роль", "Баланс", "ID"]);
+      sheet.getRange(1, 1, 1, 9).setFontWeight("bold").setBackground("#f3f3f3");
     }
 
     let data;
@@ -25,7 +25,7 @@ function doPost(e) {
       data = e.parameter;
     }
     
-    const { action, name, email, password, phone, nickname, avatar, win, winAmount, amount } = data;
+    const { action, name, email, password, phone, nickname, win, winAmount, amount } = data;
     const finalWin = win !== undefined ? win : winAmount;
 
     if (action === "saveWin") {
@@ -142,8 +142,7 @@ function doPost(e) {
             nickname: userRow[5],
             role: userRow[6] || "Новичок",
             balance: parseFloat(userRow[7]) || 0,
-            avatar: userRow[8] || "",
-            id: userRow[9] || ""
+            id: userRow[8] || ""
           } 
         });
       } else {
@@ -159,7 +158,7 @@ function doPost(e) {
       const rowIndex = rows.findIndex(row => row[1] && row[1].toString().trim().toLowerCase() === email.trim().toLowerCase());
       
       if (rowIndex !== -1) {
-        const { name, nickname, phone, avatar, password, newPassword } = data;
+        const { name, nickname, phone, password, newPassword } = data;
         
         if (newPassword) {
           if (String(rows[rowIndex][2]) !== String(password)) {
@@ -171,27 +170,12 @@ function doPost(e) {
         if (name) sheet.getRange(rowIndex + 1, 1).setValue(name);
         if (phone) sheet.getRange(rowIndex + 1, 5).setValue(phone);
         if (nickname) sheet.getRange(rowIndex + 1, 6).setValue(nickname);
-        if (avatar !== undefined) sheet.getRange(rowIndex + 1, 9).setValue(avatar);
         
         SpreadsheetApp.flush();
         return createResponse({ status: "success", message: "Профиль обновлен!" });
       } else {
         return createResponse({ status: "error", message: "Пользователь не найден" });
       }
-    }
-
-    if (action === "updateAvatar") {
-      if (!email || !avatar) {
-        return createResponse({ status: "error", message: "Email и аватар обязательны" });
-      }
-      const rows = sheet.getDataRange().getValues();
-      const rowIndex = rows.findIndex(row => row[1] && row[1].toString().trim().toLowerCase() === email.trim().toLowerCase());
-      if (rowIndex !== -1) {
-        sheet.getRange(rowIndex + 1, 9).setValue(avatar);
-        SpreadsheetApp.flush();
-        return createResponse({ status: "success", message: "Аватар обновлен!", avatar: avatar });
-      }
-      return createResponse({ status: "error", message: "Пользователь не найден" });
     }
 
     // Default action: register
@@ -210,8 +194,8 @@ function doPost(e) {
     // Use ID from frontend if available, otherwise generate one
     const userId = data.id || ("DG-" + Math.floor(100000 + Math.random() * 900000));
 
-    // Append new row: Name, Email, Password, Registration Date, Phone, Nickname, Role, Balance, Avatar, ID
-    sheet.appendRow([name, email, password, new Date(), phone, nickname, "Новичок", 20000, "", userId]);
+    // Append new row: Name, Email, Password, Registration Date, Phone, Nickname, Role, Balance, ID
+    sheet.appendRow([name, email, password, new Date(), phone, nickname, "Новичок", 20000, userId]);
     SpreadsheetApp.flush();
 
     return createResponse({ 
@@ -224,7 +208,6 @@ function doPost(e) {
         nickname,
         role: "Новичок",
         balance: 20000,
-        avatar: "",
         id: userId
       }
     });

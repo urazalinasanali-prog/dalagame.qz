@@ -547,9 +547,9 @@
             };
 
             return (
-                <nav className="fixed w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10 px-6 py-4 flex justify-between items-center">
+                <nav className="fixed w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10 px-4 sm:px-6 py-4 flex justify-between items-center">
                     <button onClick={() => window.location.reload()} className="flex items-center gap-3 group hover:opacity-80 transition-opacity bg-transparent border-none cursor-pointer">
-                        <span className="text-2xl font-bold tracking-tighter font-gaming group-hover:text-blue-400 transition-colors">dalagame.qz</span>
+                        <span className="text-xl sm:text-2xl font-bold tracking-tighter font-gaming group-hover:text-blue-400 transition-colors">dalagame.qz</span>
                     </button>
                     <div className="hidden md:flex gap-8 text-xs font-semibold uppercase tracking-widest items-center">
                         <button onClick={(e) => scrollToSection(e, 'top')} className="hover:text-blue-500 transition-colors uppercase bg-transparent border-none cursor-pointer">{lang === 'RU' ? 'Главная' : 'Басты бет'}</button>
@@ -575,7 +575,7 @@
                         
                         {user ? (
                             <div className="flex items-center gap-3">
-                                <div className="hidden sm:flex flex-col items-end mr-1">
+                                <div className="flex flex-col items-end mr-1">
                                     <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{lang === 'RU' ? 'Баланс' : 'Баланс'}</div>
                                     <div className="text-xs font-bold text-green-500">{(user.balance ?? 0).toLocaleString()} ₸</div>
                                 </div>
@@ -605,7 +605,6 @@
                                             <div className="px-4 py-2 border-b border-white/5 mb-2">
                                                 <div className="text-xs font-bold text-white truncate">{user.nickname || user.name}</div>
                                                 <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-0.5">{user.role || 'Новичок'}</div>
-                                                <div className="text-[10px] text-green-500 font-bold mt-1 sm:hidden">{(user.balance ?? 0).toLocaleString()} ₸</div>
                                             </div>
                                             <button 
                                                 onClick={() => { onOpenRecharge(); setIsDropdownOpen(false); }}
@@ -640,16 +639,16 @@
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 sm:gap-4">
                                 <button 
                                     onClick={onOpenLogin}
-                                    className="text-gray-400 hover:text-white transition-colors uppercase bg-transparent border-none cursor-pointer font-bold text-[10px] hidden lg:block"
+                                    className="text-gray-400 hover:text-white transition-colors uppercase bg-transparent border-none cursor-pointer font-bold text-[10px]"
                                 >
                                     {lang === 'RU' ? 'Вход' : 'Кіру'}
                                 </button>
                                 <button 
                                     onClick={onOpenRegister}
-                                    className="text-gray-400 hover:text-white transition-colors uppercase bg-transparent border-none cursor-pointer font-bold text-[10px] hidden lg:block"
+                                    className="text-gray-400 hover:text-white transition-colors uppercase bg-transparent border-none cursor-pointer font-bold text-[10px]"
                                 >
                                     {lang === 'RU' ? 'Регистрация' : 'Тіркелу'}
                                 </button>
