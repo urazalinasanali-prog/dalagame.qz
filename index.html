@@ -88,6 +88,7 @@
         const DESC_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJNJu3ItvN4gbicHMmBPMEuX0iKSoi30tYKpkEMgpFlbwNXEZcgNag9JA_-mreOgiiGh4_h8Bd4QJD/pub?gid=1350001392&single=true&output=csv";
         const USERS_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJNJu3ItvN4gbicHMmBPMEuX0iKSoi30tYKpkEMgpFlbwNXEZcgNag9JA_-mreOgiiGh4_h8Bd4QJD/pub?gid=1959901530&single=true&output=csv";
         const REGISTER_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7bkFGY5NpQxDeri2eRKL7GoGcsgLnrqGpY_SXX8t5k6NyAUTFQi8tWqAXPZFbWHDx/exec"; 
+        const DEFAULT_AVATAR = "https://i.pinimg.com/564x/b2/0a/24/b20a2494ffe7f8f892073a342e75150b.jpg";
         
         const { motion, useAnimation, AnimatePresence } = typeof Motion !== 'undefined' ? Motion : { motion: null, useAnimation: () => ({}), AnimatePresence: null };
 
@@ -121,36 +122,47 @@
             const RANGES = [
                 { 
                     id: 'low', 
-                    name: lang === 'RU' ? "Игры до 7 000 ₸" : "7 000 ₸ дейінгі ойындар", 
+                    name: lang === 'RU' ? "Обычный приз" : "Қарапайым сыйлық", 
                     chance: 85, 
                     color: "bg-zinc-800",
                     glow: "shadow-[0_0_15px_rgba(255,255,255,0.1)]",
                     image: "https://img.icons8.com/ios-filled/100/ffffff/controller.png",
                     minPrice: 0,
                     maxPrice: 7000,
-                    value: 7000
+                    value: 0
                 },
                 { 
                     id: 'mid', 
-                    name: lang === 'RU' ? "Игры 10 000 - 12 000 ₸" : "10 000 - 12 000 ₸ арасындағы ойындар", 
+                    name: lang === 'RU' ? "Редкий приз" : "Сирек сыйлық", 
                     chance: 10, 
                     color: "bg-blue-900/40",
                     glow: "shadow-[0_0_20px_rgba(59,130,246,0.3)]",
                     image: "https://img.icons8.com/ios-filled/100/ffffff/trophy.png",
                     minPrice: 10000,
                     maxPrice: 12000,
-                    value: 11000
+                    value: 0
                 },
                 { 
-                    id: 'high', 
-                    name: lang === 'RU' ? "Игры от 15 000 ₸" : "15 000 ₸ жоғары ойындар", 
-                    chance: 5, 
-                    color: "bg-yellow-600/40",
-                    glow: "shadow-[0_0_25px_rgba(234,179,8,0.4)]",
+                    id: 'super', 
+                    name: lang === 'RU' ? "Супер-приз" : "Супер сыйлық", 
+                    chance: 4, 
+                    color: "bg-purple-900/40",
+                    glow: "shadow-[0_0_25px_rgba(168,85,247,0.4)]",
                     image: "https://img.icons8.com/ios-filled/100/ffffff/crown.png",
                     minPrice: 15000,
-                    maxPrice: 1000000,
-                    value: 20000
+                    maxPrice: 25000,
+                    value: 0
+                },
+                { 
+                    id: 'legendary', 
+                    name: lang === 'RU' ? "Легендарный приз" : "Аңызға айналған сыйлық", 
+                    chance: 1, 
+                    color: "bg-yellow-600/40",
+                    glow: "shadow-[0_0_30px_rgba(234,179,8,0.5)]",
+                    image: "https://img.icons8.com/ios-filled/100/ffffff/diamond.png",
+                    minPrice: 30000,
+                    maxPrice: 100000,
+                    value: 0
                 }
             ];
 
@@ -161,7 +173,8 @@
                     let range;
                     if (rand < 85) range = RANGES[0];
                     else if (rand < 95) range = RANGES[1];
-                    else range = RANGES[2];
+                    else if (rand < 99) range = RANGES[2];
+                    else range = RANGES[3];
                     
                     pool.push({ ...range, spinId: i });
                 }
@@ -291,13 +304,9 @@
                     const data = await response.json();
                     console.log("Save win response:", data);
                     if (data.status === 'success') {
-                        // If server returns new balance, use it. Otherwise use increment.
-                        if (onWin) {
-                            if (data.balance !== undefined) {
-                                onWin(parseFloat(data.balance), true);
-                            } else {
-                                onWin(win.price);
-                            }
+                        // If server returns new balance, use it.
+                        if (onWin && data.balance !== undefined) {
+                            onWin(parseFloat(data.balance));
                         }
                     } else {
                         console.error("Failed to save win:", data.message);
@@ -358,10 +367,75 @@
                                     key={i} 
                                     className={`min-w-[150px] h-36 ${item.color} ${item.glow} rounded-3xl border border-white/10 p-4 flex flex-col items-center justify-center gap-3 transition-all duration-500`}
                                 >
-                                    <img src={item.image} alt="" className="h-14 w-14 object-contain opacity-90 drop-shadow-lg" />
+                                    <img src={item.image} alt="" className="h-14 w-14 object-contain opacity-90 drop-shadow-lg" referrerPolicy="no-referrer" />
                                     <span className="text-[11px] font-black text-center leading-tight text-white uppercase tracking-tight">{item.name}</span>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto mb-12 text-center">
+                        <h2 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight mb-6 px-4">
+                            {lang === 'RU' ? "Каждый кейс — шанс забрать игру дороже, чем ты заплатил" : "Әрбір кейс — сіз төлегеннен қымбат ойынды алу мүмкіндігі"}
+                        </h2>
+                        
+                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-[2.5rem] p-6 md:p-10 text-left mx-4">
+                            <h3 className="text-xl font-bold text-blue-400 mb-4">
+                                {lang === 'RU' ? "Что внутри кейса?" : "Кейс ішінде не бар?"}
+                            </h3>
+                            <p className="text-zinc-400 text-sm mb-8">
+                                {lang === 'RU' ? "Каждое открытие — это шанс получить игру или даже что-то намного круче:" : "Әрбір ашылу — ойынды немесе одан да керемет нәрсені алу мүмкіндігі:"}
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full bg-zinc-500 shadow-[0_0_10px_rgba(113,113,122,0.5)]"></div>
+                                        <span className="font-black text-zinc-300 uppercase tracking-tighter">
+                                            {lang === 'RU' ? "Обычные призы — 85%" : "Қарапайым сыйлықтар — 85%"}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                                        {lang === 'RU' ? "Гарантированная игра на сумму кейса. Ты в любом случае не остаёшься без покупки!" : "Кейс сомасына кепілдендірілген ойын. Сіз кез келген жағдайда сатып алусыз қалмайсыз!"}
+                                    </p>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                                        <span className="font-black text-blue-400 uppercase tracking-tighter">
+                                            {lang === 'RU' ? "Редкие призы — 10%" : "Сирек сыйлықтар — 10%"}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                                        {lang === 'RU' ? "Игры более высокого ценового сегмента. Можно забрать тайтл дороже, чем заплатил." : "Жоғары баға сегментіндегі ойындар. Төлегеннен қымбат тайтлды алуға болады."}
+                                    </p>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+                                        <span className="font-black text-purple-400 uppercase tracking-tighter">
+                                            {lang === 'RU' ? "Супер-призы — 4%" : "Супер сыйлықтар — 4%"}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                                        {lang === 'RU' ? "Новинки, предзаказы или подписка PlayStation Plus. Вот тут уже начинается настоящая удача." : "Жаңалықтар, алдын ала тапсырыстар немесе PlayStation Plus жазылымы. Міне, осы жерде нағыз сәттілік басталады."}
+                                    </p>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]"></div>
+                                        <span className="font-black text-yellow-400 uppercase tracking-tighter">
+                                            {lang === 'RU' ? "Легендарный приз — 1%" : "Аңызға айналған сыйлық — 1%"}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                                        {lang === 'RU' ? "Никто не знает, что здесь, но говорят — нечто классное!" : "Мұнда не бар екенін ешкім білмейді, бірақ өте керемет нәрсе дейді!"}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -380,7 +454,7 @@
                             {error && (
                                 <p className="text-red-500 font-bold text-lg animate-fade-in">{error}</p>
                             )}
-                            <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest">Шансы: 85% / 10% / 5%</p>
+                            <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest">Шансы: 85% / 10% / 4% / 1%</p>
                         </div>
                     ) : (
                         <motion.div 
@@ -421,10 +495,6 @@
                                     <p className="text-blue-400 font-bold text-lg uppercase tracking-wider mb-4">
                                         {lang === 'RU' ? "Вы можете выбрать любую игру из этой категории!" : "Осы санаттағы кез келген ойынды таңдай аласыз!"}
                                     </p>
-                                    <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 rounded-2xl border border-white/10">
-                                        <span className="text-zinc-400 text-sm font-bold uppercase">{lang === 'RU' ? "Ценность:" : "Құны:"}</span>
-                                        <span className="text-2xl font-black text-yellow-400">{result.price.toLocaleString()} ₸</span>
-                                    </div>
                                 </div>
 
                                 <div className="flex flex-col gap-4">
@@ -518,8 +588,17 @@
                                         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                         className="w-10 h-10 rounded-full border-2 border-blue-600 overflow-hidden hover:scale-105 transition-transform cursor-pointer bg-zinc-800 flex items-center justify-center"
                                     >
-                                        {user.avatar ? (
-                                            <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                        {user.avatar || DEFAULT_AVATAR ? (
+                                            <img 
+                                                src={user.avatar || DEFAULT_AVATAR} 
+                                                alt="Avatar" 
+                                                className="w-full h-full object-cover" 
+                                                referrerPolicy="no-referrer"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.nickname || user.name || "U") + "&background=random";
+                                                }}
+                                            />
                                         ) : (
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                         )}
@@ -687,7 +766,7 @@
                             ) : (
                                 cart.map((item, idx) => (
                                     <div key={idx} className="flex gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 relative group">
-                                        <img src={item.image} className="w-16 h-16 object-cover rounded-xl" alt={item.name} />
+                                        <img src={item.image} className="w-16 h-16 object-cover rounded-xl" alt={item.name} referrerPolicy="no-referrer" />
                                         <div className="flex-1">
                                             <h4 className="font-bold text-sm line-clamp-1">{item.name}</h4>
                                             <p className="text-xs text-gray-400 mt-1">{item.platform}</p>
@@ -743,7 +822,7 @@
                         
                         <div className="w-full md:w-2/5 h-64 md:h-auto relative bg-zinc-800 shrink-0">
                             {game.image ? (
-                                <img src={game.image} alt={game.name} className={`w-full h-full object-cover ${game.outOfStock ? 'grayscale' : ''}`} />
+                                <img src={game.image} alt={game.name} className={`w-full h-full object-cover ${game.outOfStock ? 'grayscale' : ''}`} referrerPolicy="no-referrer" />
                             ) : (
                                 <div className={`w-full h-full flex items-center justify-center text-white/20 font-bold ${game.outOfStock ? 'grayscale' : ''}`}>NO IMAGE</div>
                             )}
@@ -848,6 +927,7 @@
                                 src={game.image} 
                                 alt={game.name}
                                 className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${game.outOfStock ? 'grayscale' : ''}`}
+                                referrerPolicy="no-referrer"
                                 onError={(e) => {
                                     e.target.onerror = null; 
                                     e.target.style.display = 'none';
@@ -1440,16 +1520,34 @@
                         nickname: user.nickname,
                         email: user.email,
                         phone: user.phone,
-                        avatar: user.avatar
+                        avatar: user.avatar || DEFAULT_AVATAR
                     }));
                 }
-            }, [user]);
+            }, [user, DEFAULT_AVATAR]);
 
             if (!isOpen) return null;
 
             const handleInputChange = (e) => {
                 const { name, value } = e.target;
                 setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) { // 2MB limit
+                        setStatus({ 
+                            type: 'error', 
+                            message: lang === 'RU' ? 'Файл слишком большой (макс. 2МБ)' : 'Файл тым үлкен (макс. 2МБ)' 
+                        });
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setFormData(prev => ({ ...prev, avatar: reader.result }));
+                    };
+                    reader.readAsDataURL(file);
+                }
             };
 
             const handleSubmit = async (e) => {
@@ -1493,21 +1591,47 @@
                             <div className="flex items-center gap-6 mb-8">
                                 <div className="w-24 h-24 rounded-full border-4 border-blue-600 overflow-hidden bg-zinc-800 flex items-center justify-center shrink-0">
                                     {formData.avatar ? (
-                                        <img src={formData.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                        <img 
+                                            src={formData.avatar} 
+                                            alt="Avatar" 
+                                            className="w-full h-full object-cover" 
+                                            referrerPolicy="no-referrer"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(formData.nickname || formData.name || "U") + "&background=random";
+                                            }}
+                                        />
                                     ) : (
                                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Ссылка на аватар' : 'Аватар сілтемесі'}</label>
-                                    <input 
-                                        type="url"
-                                        name="avatar"
-                                        value={formData.avatar}
-                                        onChange={handleInputChange}
-                                        placeholder="https://example.com/avatar.jpg"
-                                        className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
-                                    />
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-2">{lang === 'RU' ? 'Аватар' : 'Аватар'}</label>
+                                    <div className="flex flex-col gap-2">
+                                        <input 
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            id="avatar-upload"
+                                        />
+                                        <label 
+                                            htmlFor="avatar-upload"
+                                            className="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-4 py-3 text-center cursor-pointer transition-colors text-sm font-bold uppercase tracking-widest"
+                                        >
+                                            {lang === 'RU' ? 'Загрузить из галереи' : 'Галереядан жүктеу'}
+                                        </label>
+                                        <div className="relative">
+                                            <input 
+                                                type="url"
+                                                name="avatar"
+                                                value={formData.avatar}
+                                                onChange={handleInputChange}
+                                                placeholder={lang === 'RU' ? "Или вставьте ссылку на фото" : "Немесе фото сілтемесін қойыңыз"}
+                                                className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors text-sm"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1614,8 +1738,17 @@
                         
                         <div className="flex flex-col items-center mb-8">
                             <div className="w-24 h-24 rounded-full border-4 border-blue-600 overflow-hidden bg-zinc-800 flex items-center justify-center mb-4">
-                                {user?.avatar ? (
-                                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                {user?.avatar || DEFAULT_AVATAR ? (
+                                    <img 
+                                        src={user?.avatar || DEFAULT_AVATAR} 
+                                        alt="Avatar" 
+                                        className="w-full h-full object-cover" 
+                                        referrerPolicy="no-referrer"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(user?.nickname || user?.name || "U") + "&background=random";
+                                        }}
+                                    />
                                 ) : (
                                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                 )}
@@ -1951,7 +2084,9 @@
                 const savedUser = localStorage.getItem('dalagame_user');
                 if (savedUser) {
                     try {
-                        setUser(JSON.parse(savedUser));
+                        const parsed = JSON.parse(savedUser);
+                        if (!parsed.avatar) parsed.avatar = DEFAULT_AVATAR;
+                        setUser(parsed);
                     } catch (e) {
                         console.error("Error parsing saved user");
                     }
@@ -2271,7 +2406,11 @@
                 try {
                     // Генерируем 6-значный случайный ID
                     const randomId = Math.floor(100000 + Math.random() * 900000).toString();
-                    const dataWithId = { ...userData, id: randomId };
+                    const dataWithId = { 
+                        ...userData, 
+                        id: randomId,
+                        avatar: userData.avatar || DEFAULT_AVATAR
+                    };
 
                     console.log("Attempting registration with URL:", REGISTER_SCRIPT_URL);
                     
@@ -2290,7 +2429,7 @@
                     // Преобразуем success в status для совместимости с UI
                     const finalResult = {
                         ...result,
-                        status: result.success ? 'success' : 'error'
+                        status: result.status || (result.success ? 'success' : 'error')
                     };
 
                     if (finalResult.status === 'success' && finalResult.user) {
@@ -2329,12 +2468,16 @@
                     // Преобразуем success в status для совместимости с UI
                     const finalResult = {
                         ...result,
-                        status: result.success ? 'success' : 'error'
+                        status: result.status || (result.success ? 'success' : 'error')
                     };
 
                     if (finalResult.status === 'success' && finalResult.user) {
-                        setUser(finalResult.user);
-                        localStorage.setItem('dalagame_user', JSON.stringify(finalResult.user));
+                        const userWithAvatar = {
+                            ...finalResult.user,
+                            avatar: finalResult.user.avatar || DEFAULT_AVATAR
+                        };
+                        setUser(userWithAvatar);
+                        localStorage.setItem('dalagame_user', JSON.stringify(userWithAvatar));
                     }
                     
                     return finalResult;
@@ -2373,7 +2516,7 @@
                     // Преобразуем success в status для совместимости с UI
                     const finalResult = {
                         ...result,
-                        status: result.success ? 'success' : (result.status || 'error')
+                        status: result.status || (result.success ? 'success' : 'error')
                     };
 
                     if (finalResult.status === 'success') {
@@ -2499,6 +2642,7 @@
                                                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/PlayStation_logo.svg/250px-PlayStation_logo.svg.png" 
                                                 alt="PlayStation 4" 
                                                 className="h-full object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" 
+                                                referrerPolicy="no-referrer"
                                             />
                                         </div>
                                         <h3 className="text-3xl font-bold font-gaming uppercase tracking-widest text-white">PlayStation 4</h3>
@@ -2513,6 +2657,7 @@
                                                 src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/PlayStation_logo.svg/250px-PlayStation_logo.svg.png" 
                                                 alt="PlayStation 5" 
                                                 className="h-full object-contain brightness-0 opacity-80 group-hover:opacity-100 transition-opacity" 
+                                                referrerPolicy="no-referrer"
                                             />
                                         </div>
                                         <h3 className="text-3xl font-bold font-gaming uppercase tracking-widest">PlayStation 5</h3>
@@ -2534,11 +2679,10 @@
                                             });
                                             window.lastManualBalanceUpdate = Date.now();
                                         }} 
-                                        onWin={(amount, isTotal = false) => {
+                                        onWin={(totalAmount) => {
                                             setUser(prev => {
                                                 if (!prev) return null;
-                                                const newBalance = isTotal ? amount : (prev.balance ?? 0) + amount;
-                                                const updated = { ...prev, balance: newBalance };
+                                                const updated = { ...prev, balance: totalAmount };
                                                 localStorage.setItem('dalagame_user', JSON.stringify(updated));
                                                 return updated;
                                             });
