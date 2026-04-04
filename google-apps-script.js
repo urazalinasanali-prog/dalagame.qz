@@ -10,23 +10,98 @@ function doPost(e) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName("Users");
     
-    // Create sheet if it doesn't exist
+    // Create sheets if they don't exist
     if (!sheet) {
       sheet = ss.insertSheet("Users");
-      sheet.appendRow(["Имя", "Email", "Пароль", "Дата регистрации", "Телефон", "Никнейм", "Роль", "Баланс", "ID"]);
-      sheet.getRange(1, 1, 1, 9).setFontWeight("bold").setBackground("#f3f3f3");
+      sheet.appendRow(["Имя", "Email", "Пароль", "Дата регистрации", "Телефон", "Никнейм", "Роль", "Баланс", "ID", "LastIdChange"]);
+      sheet.getRange(1, 1, 1, 10).setFontWeight("bold").setBackground("#f3f3f3");
+    }
+
+    let historySheet = ss.getSheetByName("History");
+    if (!historySheet) {
+      historySheet = ss.insertSheet("History");
+      historySheet.appendRow(["Дата", "Email", "Тип", "Сумма", "Описание"]);
+      historySheet.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#f3f3f3");
     }
 
     let data;
     try {
       data = JSON.parse(e.postData.contents);
     } catch (err) {
-      // Fallback for non-JSON or malformed data
       data = e.parameter;
     }
     
-    const { action, name, email, password, phone, nickname, win, winAmount, amount } = data;
+    const { action, name, email, password, phone, nickname, win, winAmount, amount, newId } = data;
     const finalWin = win !== undefined ? win : winAmount;
+
+    if (action === "getUsers") {
+      const rows = sheet.getDataRange().getValues();
+      const headers = rows[0];
+      const users = rows.slice(1).map(row => {
+        return {
+          name: row[0],
+          nickname: row[5],
+          role: row[6] || "Новичок",
+          id: row[8] || ""
+        };
+      });
+      return createResponse({ status: "success", users: users });
+    }
+
+    if (action === "getHistory") {
+      if (!email) return createResponse({ status: "error", message: "Email обязателен" });
+      const rows = historySheet.getDataRange().getValues();
+      const userHistory = rows.slice(1)
+        .filter(row => row[1] && row[1].toString().toLowerCase() === email.toLowerCase())
+        .map(row => ({
+          date: row[0],
+          type: row[2],
+          amount: row[3],
+          description: row[4]
+        }))
+        .reverse(); // Newest first
+      return createResponse({ status: "success", history: userHistory });
+    }
+
+    if (action === "changeId") {
+      if (!email || !newId) return createResponse({ status: "error", message: "Email и новый ID обязательны" });
+      
+      const rows = sheet.getDataRange().getValues();
+      const rowIndex = rows.findIndex(row => row[1] && row[1].toString().toLowerCase() === email.toLowerCase());
+      
+      if (rowIndex === -1) return createResponse({ status: "error", message: "Пользователь не найден" });
+      
+      const userRow = rows[rowIndex];
+      const currentBalance = parseFloat(userRow[7]) || 0;
+      const COST = 15000;
+      
+      if (currentBalance < COST) return createResponse({ status: "error", message: "Недостаточно средств (нужно 15,000 ₸)" });
+      
+      // Check uniqueness
+      const idExists = rows.some(row => row[8] && row[8].toString().toLowerCase() === newId.toLowerCase());
+      if (idExists) return createResponse({ status: "error", message: "Этот ID уже занят" });
+      
+      // Check 30 days limit
+      const lastChange = userRow[9] ? new Date(userRow[9]) : null;
+      if (lastChange) {
+        const diffDays = (new Date() - lastChange) / (1000 * 60 * 60 * 24);
+        if (diffDays < 30) return createResponse({ status: "error", message: "Смена ID возможна не чаще чем раз в 30 дней. Осталось: " + Math.ceil(30 - diffDays) + " дн." });
+      }
+      
+      const oldId = userRow[8];
+      const newBalance = currentBalance - COST;
+      
+      // Update user
+      sheet.getRange(rowIndex + 1, 8).setValue(newBalance); // Balance
+      sheet.getRange(rowIndex + 1, 9).setValue(newId);      // ID
+      sheet.getRange(rowIndex + 1, 10).setValue(new Date()); // LastChange
+      
+      // Log history
+      historySheet.appendRow([new Date(), email, "Списание", COST, "Смена ID с " + oldId + " на " + newId]);
+      
+      SpreadsheetApp.flush();
+      return createResponse({ status: "success", message: "ID успешно изменен!", newId: newId, balance: newBalance });
+    }
 
     if (action === "saveWin") {
       Logger.log('saveWin: email=' + email + ', win=' + win + ', winAmount=' + winAmount + ', gameName=' + data.gameName);
@@ -75,6 +150,10 @@ function doPost(e) {
         const winAmountNum = parseFloat(finalWin) || 0;
         newBalance = currentBalance + winAmountNum;
         sheet.getRange(rowIndex + 1, 8).setValue(newBalance);
+        
+        // Log history
+        historySheet.appendRow([new Date(), email, "Пополнение", winAmountNum, "Выигрыш в " + gameName]);
+        
         SpreadsheetApp.flush();
         Logger.log('Updated user balance to: ' + newBalance);
       }
@@ -116,6 +195,10 @@ function doPost(e) {
         
         const newBalance = currentBalance - deductAmount;
         sheet.getRange(rowIndex + 1, 8).setValue(newBalance);
+        
+        // Log history
+        historySheet.appendRow([new Date(), email, "Списание", deductAmount, data.description || "Покупка"]);
+        
         SpreadsheetApp.flush();
         Logger.log('deductBalance for ' + email + ': ' + newBalance);
         
@@ -138,6 +221,7 @@ function doPost(e) {
           user: { 
             name: userRow[0], 
             email: userRow[1],
+            regDate: userRow[3],
             phone: userRow[4],
             nickname: userRow[5],
             role: userRow[6] || "Новичок",
@@ -193,9 +277,14 @@ function doPost(e) {
 
     // Use ID from frontend if available, otherwise generate one
     const userId = data.id || ("DG-" + Math.floor(100000 + Math.random() * 900000));
+    const regDate = new Date();
 
-    // Append new row: Name, Email, Password, Registration Date, Phone, Nickname, Role, Balance, ID
-    sheet.appendRow([name, email, password, new Date(), phone, nickname, "Новичок", 20000, userId]);
+    // Append new row: Name, Email, Password, Registration Date, Phone, Nickname, Role, Balance, ID, LastIdChange
+    sheet.appendRow([name, email, password, regDate, phone, nickname, "Новичок", 20000, userId, ""]);
+    
+    // Log initial balance
+    historySheet.appendRow([regDate, email, "Пополнение", 20000, "Бонус при регистрации"]);
+    
     SpreadsheetApp.flush();
 
     return createResponse({ 
@@ -204,6 +293,7 @@ function doPost(e) {
       user: {
         name,
         email,
+        regDate,
         phone,
         nickname,
         role: "Новичок",
