@@ -207,41 +207,11 @@ function App() {
     showMessage("Вы вышли из аккаунта");
   };
 
-  const changeId = async () => {
+  const changeId = () => {
     if (!user) return;
-    const newId = prompt("Введите новый ID:");
-    if (!newId) return;
-
-    if (user.balance < 15000) {
-      showMessage("Недостаточно средств (нужно 15,000 ₸)", 'error');
-      return;
-    }
-
-    try {
-      const result = await callApi('changeId', { email: user.email, newId });
-      if (result && result.status === 'success') {
-        const updatedUser = { ...user, id: result.newId, balance: result.balance };
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        fetchHistory();
-        showMessage("ID успешно изменен!");
-      } else if (!result) {
-        // Simulation
-        const updatedUser = { ...user, id: newId, balance: user.balance - 15000 };
-        setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        const newHistoryItem: HistoryItem = {
-          date: new Date().toISOString(),
-          type: 'Списание',
-          amount: 15000,
-          description: `Смена ID на ${newId}`
-        };
-        setHistory([newHistoryItem, ...history]);
-        showMessage("ID успешно изменен (Симуляция)!");
-      }
-    } catch (err: any) {
-      showMessage(err.message || "Ошибка смены ID", 'error');
-    }
+    const message = `Здравствуйте! Хочу сменить свой ID.\nМой текущий ID: ${user.id}\nМой Email: ${user.email}`;
+    window.open(`https://api.whatsapp.com/send?phone=${WHATSAPP_PHONE}&text=${encodeURIComponent(message)}`, '_blank');
+    showMessage("Запрос на смену ID отправлен менеджеру");
   };
 
   const fetchHistory = async () => {
@@ -506,7 +476,7 @@ function App() {
                           <IdCard size={20} />
                         </div>
                         <p className="font-bold">Смена ID</p>
-                        <p className="text-xs text-gray-500">Стоимость: 15,000 ₸</p>
+                        <p className="text-xs text-gray-500">Через менеджера</p>
                       </button>
                     </div>
                   </section>
