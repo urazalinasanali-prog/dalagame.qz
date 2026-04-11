@@ -50,6 +50,14 @@
         }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         .animate-bounce-in { animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 30s linear infinite;
+            width: max-content;
+        }
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
@@ -149,6 +157,13 @@
                     winSound.current.pause();
                 };
             }, []);
+
+            const marqueeGames = React.useMemo(() => {
+                if (!games || games.length === 0) return [];
+                // Get top 15 most expensive games
+                const top = [...games].filter(g => g && g.image).sort((a, b) => b.price - a.price).slice(0, 15);
+                return [...top, ...top]; // Duplicate for seamless marquee
+            }, [games]);
 
             const CASE_COST = 10000;
             const WHATSAPP_PHONE = "77066386792";
@@ -424,6 +439,32 @@
                                 <p className="text-red-500 font-bold text-lg animate-fade-in">{error}</p>
                             )}
                             <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest">Шансы: 85% / 10% / 4% / 1%</p>
+                        </div>
+                    )}
+
+                    {/* Possible Prizes Marquee */}
+                    {marqueeGames.length > 0 && (
+                        <div className="mb-16 max-w-5xl mx-auto">
+                            <h3 className="text-zinc-400 font-bold uppercase tracking-widest text-sm mb-6">
+                                {lang === 'RU' ? 'Возможные призы' : 'Мүмкін сыйлықтар'}
+                            </h3>
+                            <div className="relative overflow-hidden flex items-center w-full rounded-3xl">
+                                {/* Gradient masks for smooth fade on edges */}
+                                <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#050505] to-transparent z-10 pointer-events-none"></div>
+                                <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#050505] to-transparent z-10 pointer-events-none"></div>
+                                
+                                <div className="flex gap-4 animate-marquee whitespace-nowrap py-4">
+                                    {marqueeGames.map((game, idx) => (
+                                        <div key={idx} className="w-28 h-40 md:w-36 md:h-48 flex-shrink-0 rounded-2xl overflow-hidden border border-white/10 relative group bg-zinc-900/50">
+                                            <img src={game.image} alt={game.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-300" referrerPolicy="no-referrer" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                                            <div className="absolute bottom-3 left-2 right-2 text-[10px] md:text-xs font-bold text-white truncate text-center drop-shadow-md">
+                                                {game.name}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
 
