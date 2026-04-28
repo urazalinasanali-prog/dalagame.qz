@@ -735,13 +735,6 @@
                                 </button>
                             </div>
                         )}
-
-                        <button 
-                            onClick={handleConsultation}
-                            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95 hidden sm:block"
-                        >
-                            {lang === 'RU' ? 'КОНСУЛЬТАЦИЯ' : 'КЕҢЕС АЛУ'}
-                        </button>
                     </div>
                 </nav>
             );
@@ -2276,6 +2269,7 @@
             const [selectionStep, setSelectionStep] = useState(1); // 1: platform, 2: catalog type, 3: content
             const [activeView, setActiveView] = useState('catalog'); // 'catalog' or 'subscriptions'
             const [searchQuery, setSearchQuery] = useState('');
+            const [visibleInfo, setVisibleInfo] = useState(null);
             const [games, setGames] = useState([]);
             const [marqueeGames, setMarqueeGames] = useState([]);
             const [categories, setCategories] = useState(['Все']); // Динамические категории
@@ -3366,32 +3360,65 @@
                                 {lang === 'RU' ? 'Мы — команда @dalagame.qz, специализирующаяся на безопасной и быстрой установке цифровых игр для PlayStation. Наша цель — сделать гейминг доступным для каждого, предлагая лучшие цены, условия и удобную рассрочку Kaspi Red и удаленную установку не выходя из дома. Доверьтесь профессионалам и наслаждайтесь любимыми играми без лишних хлопот!' : 'Біз — PlayStation үшін цифрлық ойындарды қауіпсіз және жылдам орнатуға маманданған @dalagame.qz командасымыз. Біздің мақсатымыз — ең жақсы бағалар, Kaspi Red бөліп төлеу шарттары және үйден шықпай-ақ қашықтан орнату мүмкіндігін ұсына отырып, геймингті әркімге қолжетімді ету. Кәсіпқойларға сеніңіз және сүйікті ойындарыңыздан ләззат алыңыз!'}
                             </p>
                             
-                            <div className="flex justify-center gap-6 mt-12">
+                            <div className="flex justify-center gap-6 mt-12 flex-wrap sm:flex-nowrap">
                                 <div className="flex flex-col items-center gap-2">
-                                    <span className="text-xs text-gray-400 text-center leading-tight max-w-[150px]">
-                                        {lang === 'RU' ? 'Переходите на нашу страницу в Instagram — здесь вы найдёте актуальные новости, развлекательный контент, игровые мемы и живое общение с аудиторией. Подписывайтесь, чтобы всегда оставаться в курсе последних трендов.' : 'Біздің Instagram парақшамызға өтіңіз — мұнда сіз жаңалықтарды, ойын-сауық контентін, ойын мемдерін және аудиториямен тікелей қарым-қатынасты таба аласыз. Соңғы трендтерден хабардар болу үшін жазылыңыз.'}
-                                    </span>
-                                    <a href="https://www.instagram.com/dalagame.qz?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" className="w-14 h-14 bg-zinc-900 hover:bg-gradient-to-tr hover:from-purple-600 hover:to-pink-500 rounded-2xl flex items-center justify-center transition-all hover:scale-110 hover:-translate-y-1 border border-white/10 group hover:shadow-[0_0_20px_rgba(219,39,119,0.4)]">
+                                    <div className={`transition-all duration-300 overflow-hidden ${visibleInfo === 'instagram' ? 'max-h-64 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'}`}>
+                                        <span className="text-xs text-gray-400 text-center leading-tight max-w-[150px] inline-block">
+                                            {lang === 'RU' ? 'Переходите на нашу страницу в Instagram — здесь вы найдёте актуальные новости, развлекательный контент, игровые мемы и живое общение с аудиторией. Подписывайтесь, чтобы всегда оставаться в курсе последних трендов.' : 'Біздің Instagram парақшамызға өтіңіз — мұнда сіз жаңалықтарды, ойын-сауық контентін, ойын мемдерін және аудиториямен тікелей қарым-қатынасты таба аласыз. Соңғы трендтерден хабардар болу үшін жазылыңыз.'}
+                                        </span>
+                                    </div>
+                                    <a 
+                                        href="https://www.instagram.com/dalagame.qz?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
+                                        target="_blank" 
+                                        onClick={(e) => { 
+                                            if (visibleInfo !== 'instagram') { 
+                                                e.preventDefault(); 
+                                                setVisibleInfo('instagram'); 
+                                            } 
+                                        }}
+                                        className="w-14 h-14 bg-zinc-900 hover:bg-gradient-to-tr hover:from-purple-600 hover:to-pink-500 rounded-2xl flex items-center justify-center transition-all hover:scale-110 hover:-translate-y-1 border border-white/10 group hover:shadow-[0_0_20px_rgba(219,39,119,0.4)]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:text-white transition-colors"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
                                     </a>
                                 </div>
                                 <div className="flex flex-col items-center gap-2">
-                                    <span className="text-xs text-gray-400 text-center leading-tight max-w-[150px]">
-                                        {lang === 'RU' ? (
-                                            <>Прямые трансляции проходят по расписанию: <span className="font-bold text-blue-400">понедельник, вторник, пятница, суббота и воскресенье</span> в 19:00.<br/>Для наиболее активных зрителей предусмотрены поощрительные подарки и бонусы.</>
-                                        ) : (
-                                            <>Тікелей эфирлер кесте бойынша өтеді: <span className="font-bold text-blue-400">дүйсенбі, сейсенбі, жұма, сенбі және жексенбі</span> сағат 19:00-де.<br/>Ең белсенді көрермендерге сыйлықтар мен бонустар қарастырылған.</>
-                                        )}
-                                    </span>
-                                    <a href="https://www.tiktok.com/@dalagame.qz?_r=1&_t=ZS-94axsWjmKxU" target="_blank" className="w-14 h-14 bg-zinc-900 hover:bg-purple-600 rounded-2xl flex items-center justify-center transition-all hover:scale-110 hover:-translate-y-1 border border-white/10 group hover:shadow-[0_0_20px_rgba(147,51,234,0.4)]">
+                                    <div className={`transition-all duration-300 overflow-hidden ${visibleInfo === 'tiktok' ? 'max-h-64 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'}`}>
+                                        <span className="text-xs text-gray-400 text-center leading-tight max-w-[150px] inline-block">
+                                            {lang === 'RU' ? (
+                                                <>Прямые трансляции проходят по расписанию: <span className="font-bold text-blue-400">понедельник, вторник, пятница, суббота и воскресенье</span> в 19:00.<br/>Для наиболее активных зрителей предусмотрены поощрительные подарки и бонусы.</>
+                                            ) : (
+                                                <>Тікелей эфирлер кесте бойынша өтеді: <span className="font-bold text-blue-400">дүйсенбі, сейсенбі, жұма, сенбі және жексенбі</span> сағат 19:00-де.<br/>Ең белсенді көрермендерге сыйлықтар мен бонустар қарастырылған.</>
+                                            )}
+                                        </span>
+                                    </div>
+                                    <a 
+                                        href="https://www.tiktok.com/@dalagame.qz?_r=1&_t=ZS-94axsWjmKxU" 
+                                        target="_blank" 
+                                        onClick={(e) => { 
+                                            if (visibleInfo !== 'tiktok') { 
+                                                e.preventDefault(); 
+                                                setVisibleInfo('tiktok'); 
+                                            } 
+                                        }}
+                                        className="w-14 h-14 bg-zinc-900 hover:bg-purple-600 rounded-2xl flex items-center justify-center transition-all hover:scale-110 hover:-translate-y-1 border border-white/10 group hover:shadow-[0_0_20px_rgba(147,51,234,0.4)]">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:text-white transition-colors"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>
                                     </a>
                                 </div>
                                 <div className="flex flex-col items-center gap-2">
-                                    <span className="text-xs text-gray-400 text-center leading-tight max-w-[150px]">
-                                        {lang === 'RU' ? 'Свяжитесь с нами в WhatsApp — служба технической поддержки работает для того, чтобы оперативно помочь вам с оформлением продуктов, настройкой услуг и решением любых вопросов, связанных с нашими сервисами.' : 'WhatsApp арқылы бізбен байланысыңыз — техникалық қолдау қызметі өнімдерді рәсімдеуге, қызметтерді баптауға және біздің қызметтерімізге қатысты кез келген сұрақтарды шешуге көмектесу үшін жұмыс істейді.'}
-                                    </span>
-                                    <a href="https://api.whatsapp.com/send/?phone=77066386792&text&type=phone_number&app_absent=0&utm_source=ig" target="_blank" className="w-14 h-14 bg-zinc-900 hover:bg-green-600 rounded-2xl flex items-center justify-center transition-all hover:scale-110 hover:-translate-y-1 border border-white/10 group">
+                                    <div className={`transition-all duration-300 overflow-hidden ${visibleInfo === 'whatsapp' ? 'max-h-64 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'}`}>
+                                        <span className="text-xs text-gray-400 text-center leading-tight max-w-[150px] inline-block">
+                                            {lang === 'RU' ? 'Свяжитесь с нами в WhatsApp — служба технической поддержки работает для того, чтобы оперативно помочь вам с оформлением продуктов, настройкой услуг и решением любых вопросов, связанных с нашими сервисами.' : 'WhatsApp арқылы бізбен байланысыңыз — техникалық қолдау қызметі өнімдерді рәсімдеуге, қызметтерді баптауға және біздің қызметтерімізге қатысты кез келген сұрақтарды шешуге көмектесу үшін жұмыс істейді.'}
+                                        </span>
+                                    </div>
+                                    <a 
+                                        href="https://api.whatsapp.com/send/?phone=77066386792&text&type=phone_number&app_absent=0&utm_source=ig" 
+                                        target="_blank" 
+                                        onClick={(e) => { 
+                                            if (visibleInfo !== 'whatsapp') { 
+                                                e.preventDefault(); 
+                                                setVisibleInfo('whatsapp'); 
+                                            } 
+                                        }}
+                                        className="w-14 h-14 bg-zinc-900 hover:bg-green-600 rounded-2xl flex items-center justify-center transition-all hover:scale-110 hover:-translate-y-1 border border-white/10 group">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:text-white transition-colors"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                                     </a>
                                 </div>
