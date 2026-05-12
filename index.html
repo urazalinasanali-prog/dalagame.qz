@@ -99,25 +99,85 @@
         const DEFAULT_AVATAR = "https://i.pinimg.com/564x/b2/0a/24/b20a2494ffe7f8f892073a342e75150b.jpg";
         const ROLES_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQJNJu3ItvN4gbicHMmBPMEuX0iKSoi30tYKpkEMgpFlbwNXEZcgNag9JA_-mreOgiiGh4_h8Bd4QJD/pub?gid=132597373&single=true&output=csv";
 
+        // Security / Encryption Utils
+        const StorageUtils = {
+            key: "DALAGAME_SEC_KEY_2026",
+            encrypt: function(data) {
+                try {
+                    const text = typeof data === 'string' ? data : JSON.stringify(data);
+                    let result = '';
+                    for(let i=0; i<text.length; i++) {
+                        result += String.fromCharCode(text.charCodeAt(i) ^ this.key.charCodeAt(i % this.key.length));
+                    }
+                    return btoa(encodeURIComponent(result));
+                } catch(e) { return null; }
+            },
+            decrypt: function(hash) {
+                if (!hash) return null;
+                try {
+                    // Try decrypting
+                    const text = decodeURIComponent(atob(hash));
+                    let result = '';
+                    for(let i=0; i<text.length; i++) {
+                        result += String.fromCharCode(text.charCodeAt(i) ^ this.key.charCodeAt(i % this.key.length));
+                    }
+                    return result;
+                } catch(e) { 
+                    // Fallback for unencrypted legacy data
+                    return hash; 
+                }
+            },
+            setItem: function(keyName, value) {
+                localStorage.setItem(keyName, this.encrypt(value));
+            },
+            getItem: function(keyName) {
+                const hash = localStorage.getItem(keyName);
+                if(!hash) return null;
+                const decrypted = this.decrypt(hash);
+                // Check if it was unencrypted
+                if (decrypted && decrypted.startsWith('{') || decrypted.startsWith('[')) {
+                     // Try parsing
+                }
+                return decrypted;
+            },
+            removeItem: function(keyName) {
+                localStorage.removeItem(keyName);
+            }
+        };
+
+        async function hashPassword(password) {
+            const msgBuffer = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         const addHistoryRecord = (email, type, amount, description) => {
             if (!email) return;
             const key = `dalagame_history_${email}`;
-            const history = JSON.parse(localStorage.getItem(key) || '[]');
+            const stored = StorageUtils.getItem(key);
+            let history = [];
+            try { history = stored ? JSON.parse(stored) : []; } catch(e) {}
+            if (!Array.isArray(history)) history = [];
             history.unshift({
                 id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                 date: new Date().toISOString(),
-                type, // 'topup' | 'deduction'
+                type, 
                 amount,
                 description
             });
             if (history.length > 50) history.length = 50;
-            localStorage.setItem(key, JSON.stringify(history));
+            StorageUtils.setItem(key, history);
         };
 
         const getHistoryRecords = (email) => {
             if (!email) return [];
             const key = `dalagame_history_${email}`;
-            return JSON.parse(localStorage.getItem(key) || '[]');
+            const stored = StorageUtils.getItem(key);
+            try {
+                const parsed = stored ? JSON.parse(stored) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch(e) { return []; }
         };
 
         const getRoleColor = (role, customColor) => {
@@ -2379,7 +2439,7 @@
 
             // Load user from localStorage on mount
             useEffect(() => {
-                const savedUser = localStorage.getItem('dalagame_user');
+                const savedUser = StorageUtils.getItem('dalagame_user');
                 if (savedUser) {
                     try {
                         const parsed = JSON.parse(savedUser);
@@ -2435,7 +2495,7 @@
 
                                 console.log(`[Баланс] Обновлен через API: ${newBalance} (было ${prev.balance})`);
                                 const updated = { ...prev, balance: newBalance };
-                                localStorage.setItem('dalagame_user', JSON.stringify(updated));
+                                StorageUtils.setItem('dalagame_user', JSON.stringify(updated));
                                 return updated;
                             });
                         }
@@ -2540,7 +2600,7 @@
                                         id: customId || prev.id,
                                         roleColor: customRoleColor
                                     };
-                                    localStorage.setItem('dalagame_user', JSON.stringify(updated));
+                                    StorageUtils.setItem('dalagame_user', JSON.stringify(updated));
                                     return updated;
                                 });
                             }
@@ -2823,6 +2883,9 @@
 
             const handleRegister = async (userData) => {
                 try {
+                    // Hash the password for security
+                    const hashedPassword = userData.password ? await hashPassword(userData.password) : '';
+                    
                     // Генерируем 6-значный случайный ID
                     const randomId = Math.floor(100000 + Math.random() * 900000).toString();
                     
@@ -2835,6 +2898,7 @@
 
                     const dataWithId = { 
                         ...userData, 
+                        password: hashedPassword,
                         id: randomId,
                         avatar: userData.avatar || DEFAULT_AVATAR,
                         role: 'Новичок',
@@ -2864,7 +2928,7 @@
                     if (finalResult.status === 'success' && finalResult.user) {
                         // Automatically log in after registration
                         setUser(finalResult.user);
-                        localStorage.setItem('dalagame_user', JSON.stringify(finalResult.user));
+                        StorageUtils.setItem('dalagame_user', JSON.stringify(finalResult.user));
                     }
                     
                     return finalResult;
@@ -2880,11 +2944,13 @@
 
             const handleLogin = async (credentials) => {
                 try {
+                    const hashedPassword = credentials.password ? await hashPassword(credentials.password) : '';
+                    const secureCredentials = { ...credentials, password: hashedPassword };
                     console.log("Attempting login with URL:", REGISTER_SCRIPT_URL);
                     
                     const response = await fetch(REGISTER_SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify({ ...credentials, action: 'login' })
+                        body: JSON.stringify({ ...secureCredentials, action: 'login' })
                     });
                     
                     if (!response.ok) {
@@ -2907,7 +2973,7 @@
                             role: finalResult.user.role || 'Новичок'
                         };
                         setUser(userWithAvatar);
-                        localStorage.setItem('dalagame_user', JSON.stringify(userWithAvatar));
+                        StorageUtils.setItem('dalagame_user', JSON.stringify(userWithAvatar));
                     }
                     
                     return finalResult;
@@ -2923,15 +2989,19 @@
 
             const handleLogout = () => {
                 setUser(null);
-                localStorage.removeItem('dalagame_user');
+                StorageUtils.removeItem('dalagame_user');
             };
 
             const handleUpdateProfile = async (formData) => {
                 try {
+                    let hashedFormData = { ...formData };
+                    if (formData.password) hashedFormData.password = await hashPassword(formData.password);
+                    if (formData.newPassword) hashedFormData.newPassword = await hashPassword(formData.newPassword);
+                    
                     const payload = JSON.stringify({ 
                         action: 'updateProfile', 
                         email: user.email, 
-                        ...formData 
+                        ...hashedFormData 
                     });
                     console.log("Updating profile, payload size:", (payload.length / 1024).toFixed(2), "KB");
                     
@@ -2962,7 +3032,7 @@
                             avatar: formData.avatar
                         };
                         setUser(updatedUser);
-                        localStorage.setItem('dalagame_user', JSON.stringify(updatedUser));
+                        StorageUtils.setItem('dalagame_user', JSON.stringify(updatedUser));
                     }
                     
                     return finalResult;
