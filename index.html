@@ -2568,7 +2568,7 @@
 
             const fetchWithTimeout = async (url, name) => {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 12000);
+                const timeoutId = setTimeout(() => controller.abort(new Error('Timeout')), 30000);
 
                 try {
                     // Используем максимально простой fetch без лишних заголовков для Google Sheets
@@ -2588,9 +2588,9 @@
                     return text;
                 } catch (e) {
                     clearTimeout(timeoutId);
-                    console.error(`[Fetch Error] ${name}:`, e);
+                    console.error(`[Fetch Error] ${name}:`, e.message || e);
                     
-                    if (e.name === 'AbortError') throw new Error("Тайм-аут (медленный интернет)");
+                    if (e.name === 'AbortError' || (e.message && e.message.includes('Timeout'))) throw new Error("Тайм-аут (медленный интернет)");
                     if (e.message === "HTML_RESPONSE") throw new Error("Лист не опубликован как CSV");
                     
                     throw new Error("Ошибка сети или блокировка CORS. Проверьте публикацию таблицы.");
