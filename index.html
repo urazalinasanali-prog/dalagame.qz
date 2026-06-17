@@ -21,6 +21,13 @@
     
     <!-- Babel Standalone (to compile JSX in browser) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        Babel.registerPreset("classic-react", {
+            presets: [
+                [Babel.availablePresets["react"], { runtime: "classic" }]
+            ]
+        });
+    </script>
 
     <style>
         body { 
@@ -79,7 +86,7 @@
     <div id="root"></div>
 
     <!-- Main Application Script -->
-    <script type="text/babel">
+    <script type="text/babel" data-presets="classic-react">
         // Global error handler
         window.onerror = function(message, source, lineno, colno, error) {
             console.error("Global script error:", { message, source, lineno, colno, error });
@@ -307,6 +314,9 @@
                     return;
                 }
 
+                // Capture initial balance
+                const initialBalance = currentBalance;
+
                 // 1. Reset state and start local deduction immediately for responsiveness
                 setSpinning(true);
                 setResult(null);
@@ -364,8 +374,8 @@
                     setSpinning(false);
                     setIsAnimating(false);
                     
-                    // Save win automatically to database
-                    saveWinToDatabase(finalWin);
+                    // Save win automatically to database, pass initialBalance
+                    saveWinToDatabase(finalWin, initialBalance);
                 }, 7200);
 
                 try {
@@ -390,7 +400,7 @@
                 }
             };
 
-            const saveWinToDatabase = async (win) => {
+            const saveWinToDatabase = async (win, initialBalance) => {
                 console.log("Attempting to save win:", win);
                 if (!user || !user.email) {
                     console.error("Cannot save win: User not logged in or email missing");
@@ -417,9 +427,11 @@
                         }
                     } else {
                         console.error("Failed to save win:", data.message);
+                        if (onWin) onWin(initialBalance - CASE_COST + win.price);
                     }
                 } catch (e) {
                     console.error("Error saving win:", e);
+                    if (onWin) onWin(initialBalance - CASE_COST + win.price);
                 }
             };
 
