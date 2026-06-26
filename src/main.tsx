@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { motion, AnimatePresence, useAnimation } from 'motion/react';
 import ErrorBoundary from './ErrorBoundary';
 import './index.css';
-import gta6Bg from './assets/images/gta6_characters_bg_1782414728464.jpg';
+import gta6Bg from './assets/images/gta6_user_uploaded.jpg';
 import gta6Lowrider from './assets/images/gta6_lowrider_1782463040247.jpg';
 import gta6Yacht from './assets/images/gta6_yacht_1782463061573.jpg';
 import gta6CarDrive from './assets/images/gta6_car_drive_1782463080544.jpg';
@@ -763,16 +763,6 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
         const Hero = ({ descriptions = [], loading = false, lang, user }) => {
             const [copied, setCopied] = React.useState(false);
             const userId = user?.id || (lang === 'RU' ? 'Гость' : 'Қонақ');
-            
-            const backgroundImages = [gta6Bg, gta6Lowrider, gta6Yacht, gta6CarDrive, gta6Street, gta6Club];
-            const [currentBgIndex, setCurrentBgIndex] = React.useState(0);
-
-            React.useEffect(() => {
-                const interval = setInterval(() => {
-                    setCurrentBgIndex((prev) => (prev + 1) % backgroundImages.length);
-                }, 2000);
-                return () => clearInterval(interval);
-            }, []);
 
             const scrollToCatalog = (e) => {
                 e.preventDefault();
@@ -804,27 +794,17 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
             return (
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-24 px-4">
                     <div className="absolute inset-0 z-0">
-                        <AnimatePresence mode="popLayout">
-                            <motion.img 
-                                key={currentBgIndex}
-                                src={backgroundImages[currentBgIndex]} 
-                                alt="GTA 6 Background" 
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 0.45 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.8, ease: "easeInOut" }}
-                                className="absolute inset-0 w-full h-full object-cover scale-105 filter saturate-[1.15] contrast-[1.05]"
-                                referrerPolicy="no-referrer"
-                            />
-                        </AnimatePresence>
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-[#050505]"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/60 via-transparent to-[#050505]/60"></div>
+                        <img 
+                            src={gta6Bg} 
+                            alt="GTA 6 Background" 
+                            className="absolute inset-0 w-full h-full object-cover opacity-75 scale-105 filter saturate-[1.15] contrast-[1.05]"
+                            referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/30 to-[#050505]/90"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/50 via-transparent to-[#050505]/50"></div>
                     </div>
                     
-                    <div className="relative z-10 text-center w-full max-w-4xl mx-auto">
-                        <div className="inline-block kaspi-red-badge px-6 py-1.5 rounded-full text-[9px] sm:text-[10px] font-bold mb-6 uppercase tracking-[0.2em] shadow-lg shadow-red-900/20">
-                            {lang === 'RU' ? 'Рассрочка Kaspi Red' : 'Kaspi Red бөліп төлеу'}
-                        </div>
+                    <div className="relative z-10 text-center w-full max-w-4xl mx-auto pt-8">
                         <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold font-gaming mb-8 leading-[1.1] sm:leading-[0.9] tracking-tighter">
                             {lang === 'RU' ? 'Цифровые игры на' : 'Цифрлық ойындар'}<br/>
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff3399] via-[#ff9933] to-[#9933ff] drop-shadow-[0_0_15px_rgba(255,51,153,0.5)]">PlayStation 4/5</span>
@@ -2029,13 +2009,13 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
             );
         };
 
-        const BattlePassTasks = ({ lang, user, showTitle = false }) => {
+        const DalaPassTasks = ({ lang, user, showTitle = false }) => {
             return (
                 <div className="relative w-full">
                     {showTitle && (
                         <div className="text-center mb-12">
                             <h2 className="text-4xl md:text-6xl font-bold font-gaming uppercase tracking-widest mb-4">
-                                Battle <span className="text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">Pass</span>
+                                Dala <span className="text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">Pass</span>
                             </h2>
                             <p className="text-lg md:text-xl text-gray-400 font-bold max-w-2xl mx-auto">
                                 {lang === 'RU' ? 'Выполняй задания и получай бонусы на баланс для покупок!' : 'Тапсырмаларды орындаңыз және сатып алулар үшін балансқа бонустар алыңыз!'}
@@ -2204,10 +2184,10 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                                 {lang === 'RU' ? 'Профиль' : 'Профиль'}
                             </button>
                             <button 
-                                onClick={() => setActiveTab('battlepass')}
-                                className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-lg transition-colors ${activeTab === 'battlepass' ? 'bg-amber-600 text-white shadow-[0_0_15px_rgba(217,119,6,0.4)]' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10'}`}
+                                onClick={() => setActiveTab('dalapass')}
+                                className={`flex-1 flex items-center justify-center gap-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest rounded-lg transition-colors ${activeTab === 'dalapass' ? 'bg-amber-600 text-white shadow-[0_0_15px_rgba(217,119,6,0.4)]' : 'text-amber-500 hover:text-amber-400 hover:bg-amber-500/10'}`}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={activeTab === 'battlepass' ? 'animate-pulse' : ''}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={activeTab === 'dalapass' ? 'animate-pulse' : ''}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                                 {lang === 'RU' ? 'Квесты' : 'Квесттар'}
                             </button>
                             <button 
@@ -2270,8 +2250,8 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                             </>
                         )}
                         
-                        {activeTab === 'battlepass' && (
-                            <BattlePassTasks lang={lang} user={user} showTitle={false} />
+                        {activeTab === 'dalapass' && (
+                            <DalaPassTasks lang={lang} user={user} showTitle={false} />
                         )}
 
                         {activeTab === 'history' && (
@@ -3821,7 +3801,7 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                     </section>
 
                     <section id="quests" className="py-16 md:py-24 px-6 max-w-7xl mx-auto">
-                        <BattlePassTasks lang={lang} user={user} showTitle={true} />
+                        <DalaPassTasks lang={lang} user={user} showTitle={true} />
                     </section>
 
                     <Reviews lang={lang} />

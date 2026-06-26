@@ -29,6 +29,7 @@
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "playwright-chromium": "^1.61.1",
     "puppeteer": "^25.1.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
