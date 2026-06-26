@@ -616,9 +616,9 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
 
             return (
                 <>
-                <nav className="fixed w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10 px-4 sm:px-6 py-4 flex justify-between items-center transition-all duration-300">
+                <nav className="fixed w-full z-50 bg-black/80 backdrop-blur-xl border-b border-white/10 px-4 sm:px-6 py-2 sm:py-3 flex justify-between items-center transition-all duration-300">
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 hover:bg-white/10 rounded-lg transition-colors text-white">
+                        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="lg:hidden p-2 hover:bg-white/10 rounded-lg transition-colors text-white">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 {isMobileMenuOpen ? <path d="M18 6 6 18M6 6l12 12"/> : <path d="M4 6h16M4 12h16M4 18h16"/>}
                             </svg>
@@ -628,7 +628,7 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                         </button>
                     </div>
 
-                    <div className="hidden md:flex gap-4 lg:gap-8 text-[10px] lg:text-xs font-semibold uppercase tracking-widest items-center">
+                    <div className="hidden lg:flex gap-3 xl:gap-6 text-[9px] xl:text-[10px] font-semibold uppercase tracking-widest items-center">
                         <NavLinks />
                     </div>
 
@@ -750,7 +750,7 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                 )}
 
                 {/* Mobile Menu Drawer */}
-                <div className={`fixed top-0 left-0 w-64 h-full bg-zinc-950 z-[46] md:hidden transform transition-transform duration-300 ease-in-out border-r border-white/10 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className={`fixed top-0 left-0 w-64 h-full bg-zinc-950 z-[46] lg:hidden transform transition-transform duration-300 ease-in-out border-r border-white/10 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                     <div className="p-6 flex flex-col gap-6 pt-24">
                         <NavLinks />
                     </div>
@@ -794,12 +794,12 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-24 px-4">
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src="https://assets-prd.ignimgs.com/2025/05/07/acc797c96579836fedbe314a37856a0761cdc687-1746654158015.jpg" 
+                            src="https://static.wikia.nocookie.net/gtawiki/images/a/a5/Artwork-Trailer2Thumbnail2-GTAVI.jpg/revision/latest/scale-to-width-down/1200?cb=20260330025009" 
                             alt="GTA 6 Background" 
-                            className="absolute inset-0 w-full h-full object-cover opacity-90 scale-105 filter saturate-[1.1] contrast-[1.05]"
+                            className="absolute inset-0 w-full h-full object-cover object-[center_40%] opacity-90 scale-105 filter saturate-[1.1] contrast-[1.05]"
                             referrerPolicy="no-referrer"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-[#050505]/20 to-[#050505]/80"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-[#050505]/20 to-[#050505]/40"></div>
                         <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/40 via-transparent to-[#050505]/40"></div>
                     </div>
                     
