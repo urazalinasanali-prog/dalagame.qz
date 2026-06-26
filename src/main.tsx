@@ -4,7 +4,6 @@ import ReactDOM from 'react-dom/client';
 import { motion, AnimatePresence, useAnimation } from 'motion/react';
 import ErrorBoundary from './ErrorBoundary';
 import './index.css';
-import gta6Bg from './assets/images/gta6_user_uploaded.jpg';
 import gta6Lowrider from './assets/images/gta6_lowrider_1782463040247.jpg';
 import gta6Yacht from './assets/images/gta6_yacht_1782463061573.jpg';
 import gta6CarDrive from './assets/images/gta6_car_drive_1782463080544.jpg';
@@ -795,13 +794,13 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-24 px-4">
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src={gta6Bg} 
+                            src="https://assets-prd.ignimgs.com/2025/05/07/acc797c96579836fedbe314a37856a0761cdc687-1746654158015.jpg" 
                             alt="GTA 6 Background" 
-                            className="absolute inset-0 w-full h-full object-cover opacity-75 scale-105 filter saturate-[1.15] contrast-[1.05]"
+                            className="absolute inset-0 w-full h-full object-cover opacity-90 scale-105 filter saturate-[1.1] contrast-[1.05]"
                             referrerPolicy="no-referrer"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-[#050505]/30 to-[#050505]/90"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/50 via-transparent to-[#050505]/50"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/80 via-[#050505]/20 to-[#050505]/80"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/40 via-transparent to-[#050505]/40"></div>
                     </div>
                     
                     <div className="relative z-10 text-center w-full max-w-4xl mx-auto pt-8">
