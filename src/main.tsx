@@ -804,15 +804,6 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                     </div>
                     
                     <div className="relative z-10 text-center w-full max-w-4xl mx-auto pt-8">
-                        <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold font-gaming mb-8 leading-[1.1] sm:leading-[0.9] tracking-tighter">
-                            {lang === 'RU' ? 'Цифровые игры на' : 'Цифрлық ойындар'}<br/>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff3399] via-[#ff9933] to-[#9933ff] drop-shadow-[0_0_15px_rgba(255,51,153,0.5)]">PlayStation 4/5</span>
-                        </h1>
-
-                        <p className="text-base sm:text-xl md:text-2xl font-gaming italic text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white tracking-widest drop-shadow-sm mb-10 max-w-2xl mx-auto opacity-80 text-center">
-                            {lang === 'RU' ? '"Не просто магазин игр, а культурный бренд"' : '"Жай ғана ойын дүкені емес, мәдени бренд"'}
-                        </p>
-
                         <div className="flex flex-col gap-3 max-w-xl mx-auto mb-10 text-left md:text-center items-start md:items-center bg-black/40 p-5 sm:p-6 md:p-8 rounded-[2rem] border border-white/5 backdrop-blur-sm shadow-2xl">
                             {descriptions.length > 0 ? descriptions.map((desc, i) => (
                                 <div key={i} className="flex items-center gap-3 text-gray-200 text-sm sm:text-base md:text-lg font-medium">
@@ -874,7 +865,7 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                                 onClick={scrollToCatalog}
                                 className="w-full sm:w-auto px-12 py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all ps-blue-glow hover:scale-105 active:scale-95 text-center cursor-pointer"
                             >
-                                {lang === 'RU' ? 'ВЫБРАТЬ ПРИСТАВКУ (КАТАЛОГ)' : 'ПРИСТАВКА ТАҢДАУ (КАТАЛОГ)'}
+                                {lang === 'RU' ? 'ВЫБРАТЬ ПРИСТАВКУ' : 'ПРИСТАВКА ТАҢДАУ'}
                             </button>
                         </div>
                     </div>
