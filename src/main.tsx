@@ -4,7 +4,12 @@ import ReactDOM from 'react-dom/client';
 import { motion, AnimatePresence, useAnimation } from 'motion/react';
 import ErrorBoundary from './ErrorBoundary';
 import './index.css';
-import gta6Bg from './assets/images/gta6_hero_bg_1782395478344.jpg';
+import gta6Bg from './assets/images/gta6_characters_bg_1782414728464.jpg';
+import gta6Lowrider from './assets/images/gta6_lowrider_1782463040247.jpg';
+import gta6Yacht from './assets/images/gta6_yacht_1782463061573.jpg';
+import gta6CarDrive from './assets/images/gta6_car_drive_1782463080544.jpg';
+import gta6Street from './assets/images/gta6_street_1782463099757.jpg';
+import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
 
         // --- CONSTANTS ---
         const WHATSAPP_PHONE = "77066386792"; 
@@ -758,6 +763,16 @@ import gta6Bg from './assets/images/gta6_hero_bg_1782395478344.jpg';
         const Hero = ({ descriptions = [], loading = false, lang, user }) => {
             const [copied, setCopied] = React.useState(false);
             const userId = user?.id || (lang === 'RU' ? 'Гость' : 'Қонақ');
+            
+            const backgroundImages = [gta6Bg, gta6Lowrider, gta6Yacht, gta6CarDrive, gta6Street, gta6Club];
+            const [currentBgIndex, setCurrentBgIndex] = React.useState(0);
+
+            React.useEffect(() => {
+                const interval = setInterval(() => {
+                    setCurrentBgIndex((prev) => (prev + 1) % backgroundImages.length);
+                }, 2000);
+                return () => clearInterval(interval);
+            }, []);
 
             const scrollToCatalog = (e) => {
                 e.preventDefault();
@@ -789,12 +804,19 @@ import gta6Bg from './assets/images/gta6_hero_bg_1782395478344.jpg';
             return (
                 <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-24 px-4">
                     <div className="absolute inset-0 z-0">
-                        <img 
-                            src={gta6Bg} 
-                            alt="GTA 6 Background" 
-                            className="w-full h-full object-cover opacity-45 scale-105 filter saturate-[1.15] contrast-[1.05]"
-                            referrerPolicy="no-referrer"
-                        />
+                        <AnimatePresence mode="popLayout">
+                            <motion.img 
+                                key={currentBgIndex}
+                                src={backgroundImages[currentBgIndex]} 
+                                alt="GTA 6 Background" 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 0.45 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.8, ease: "easeInOut" }}
+                                className="absolute inset-0 w-full h-full object-cover scale-105 filter saturate-[1.15] contrast-[1.05]"
+                                referrerPolicy="no-referrer"
+                            />
+                        </AnimatePresence>
                         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-[#050505]"></div>
                         <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/60 via-transparent to-[#050505]/60"></div>
                     </div>
@@ -852,9 +874,7 @@ import gta6Bg from './assets/images/gta6_hero_bg_1782395478344.jpg';
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                                     <div className="flex items-center justify-center gap-2">
-                                        <span className="text-xl">🌴</span>
-                                        <span>{lang === 'RU' ? 'ПРЕДЗАКАЗАТЬ GTA 6' : 'GTA 6 АЛДЫН АЛА ТАПСЫРЫС БЕРУ'}</span>
-                                        <span className="text-xl">🌴</span>
+                                        <span>{lang === 'RU' ? 'Оформить предзаказ Grand Theft Auto VI' : 'Grand Theft Auto VI алдын ала тапсырыс беру'}</span>
                                     </div>
                                 </button>
 
@@ -2497,19 +2517,67 @@ import gta6Bg from './assets/images/gta6_hero_bg_1782395478344.jpg';
             return rows;
         };
 
-        const LoyaltyProgress = ({ user, lang, loyaltyPrizes }) => {
+        const LoyaltyProgress = ({ user, lang }) => {
             if (!user) return null;
             
             const gamesBought = user.gamesBought || 0;
-            const targetGames = [5, 10, 15];
-            const maxTarget = 15;
+            const targetGames = [1, 3, 5, 7, 10, 12, 15, 17, 20, 22, 25];
+            const maxTarget = 25;
             
             // Найти следующую цель
             let nextTarget = targetGames.find(t => gamesBought < t) || maxTarget;
             
+            const rewards = {
+                1: {
+                    RU: '🎁 +2 000 ₸ на баланс',
+                    KK: '🎁 Балансқа +2 000 ₸'
+                },
+                3: {
+                    RU: '🏅 Уникальный статус «Новобранец DalaGame»',
+                    KK: '🏅 «DalaGame Жаңа ойыншысы» бірегей статусы'
+                },
+                5: {
+                    RU: '💰 +5 000 ₸ на баланс',
+                    KK: '💰 Балансқа +5 000 ₸'
+                },
+                7: {
+                    RU: '🎟️ +1 дополнительный билет в каждом розыгрыше',
+                    KK: '🎟️ Әр ұтыста +1 қосымша билет'
+                },
+                10: {
+                    RU: '🎲 Бесплатная прокрутка рулетки',
+                    KK: '🎲 Рулетканы тегін айналдыру'
+                },
+                12: {
+                    RU: '🎮 Бесплатная игра (по согласованию с менеджером)',
+                    KK: '🎮 Тегін ойын (менеджермен келісу бойынша)'
+                },
+                15: {
+                    RU: '👑 Статус «Приоритетный клиент» + еще 5 000 ₸ на баланс',
+                    KK: '👑 «Басымдықты клиент» статусы + балансқа тағы 5 000 ₸'
+                },
+                17: {
+                    RU: '🎁 Секретный подарок (рандомная игра или EA Play на месяц)',
+                    KK: '🎁 Құпия сыйлық (кездейсоқ ойын немесе 1 айға EA Play)'
+                },
+                20: {
+                    RU: '🛍️ Персональная скидка 10% на следующую покупку',
+                    KK: '🛍️ Келесі сатып алуға жеке 10% жеңілдік'
+                },
+                22: {
+                    RU: '🎮 Бесплатная новинка до 10 000 ₸',
+                    KK: '🎮 10 000 ₸-ге дейін тегін жаңа ойын'
+                },
+                25: {
+                    RU: '💎 Статус «Легенда DalaGame» + эксклюзивный цвет профиля',
+                    KK: '💎 «DalaGame Аңызы» статусы + профильдің эксклюзивті түсі'
+                }
+            };
+
             const getPrizeText = (target) => {
-                const prize = loyaltyPrizes[target.toString()];
-                return prize || (lang === 'RU' ? 'Секретный приз' : 'Құпия сыйлық');
+                const prize = rewards[target];
+                if (!prize) return lang === 'RU' ? 'Секретный приз' : 'Құпия сыйлық';
+                return lang === 'RU' ? prize.RU : prize.KK;
             };
 
             const claimPrize = (target) => {
@@ -2522,78 +2590,110 @@ import gta6Bg from './assets/images/gta6_hero_bg_1782395478344.jpg';
                 window.open(`https://api.whatsapp.com/send?phone=77066386792&text=${encodeURIComponent(message)}`, '_blank');
             };
 
+            // Вычисляем процент заполнения шкалы между круглыми узлами прогресса
+            const getProgressPercent = () => {
+                if (gamesBought <= 0) return 0;
+                if (gamesBought >= maxTarget) return 100;
+                
+                // Находим индексы интервала
+                if (gamesBought < targetGames[0]) {
+                    return (gamesBought / targetGames[0]) * (100 / (targetGames.length - 1));
+                }
+                
+                for (let i = 0; i < targetGames.length - 1; i++) {
+                    const current = targetGames[i];
+                    const next = targetGames[i + 1];
+                    if (gamesBought >= current && gamesBought <= next) {
+                        const intervalProgress = (gamesBought - current) / (next - current);
+                        // Каждый интервал занимает ровно 1/10 (10%) от общей ширины 11 узлов
+                        return (i + intervalProgress) * 10;
+                    }
+                }
+                return 100;
+            };
+
+            const fillPercent = getProgressPercent();
+
             return (
-                <div className="max-w-7xl mx-auto px-6 mb-12">
+                <div className="max-w-7xl mx-auto px-6 mt-16 sm:mt-24 mb-16 sm:mb-24">
                     <div className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-sm relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[100px] pointer-events-none"></div>
                         
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                             <div>
                                 <h3 className="text-2xl sm:text-3xl font-bold font-gaming uppercase tracking-wider text-white">
-                                    {lang === 'RU' ? 'Твой прогресс' : 'Сенің прогрессің'}
+                                    {lang === 'RU' ? 'Путь игрока' : 'Ойыншы жолы'}
                                 </h3>
-                                <p className="text-gray-400 mt-2">
+                                <p className="text-gray-400 mt-2 text-sm sm:text-base">
                                     {lang === 'RU' ? 'Покупай игры и получай бонусы!' : 'Ойындар сатып алып, бонустар ал!'}
                                 </p>
                             </div>
-                            <div className="bg-amber-500/20 text-amber-500 font-bold px-4 py-2 rounded-xl text-lg flex items-center gap-2 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                            <div className="bg-amber-500/20 text-amber-500 font-bold px-4 py-2 rounded-xl text-sm sm:text-lg flex items-center gap-2 border border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                                 {gamesBought} {lang === 'RU' ? 'игр куплено' : 'ойын сатып алынды'}
                             </div>
                         </div>
 
-                        <div className="relative">
-                            {/* Progress bar background */}
-                            <div className="absolute top-1/2 left-0 w-full h-2 bg-gray-800 rounded-full -translate-y-1/2 z-0 hidden sm:block"></div>
-                            
-                            {/* Progress bar fill */}
-                            <div 
-                                className="absolute top-1/2 left-0 h-2 bg-gradient-to-r from-amber-600 to-amber-400 rounded-full -translate-y-1/2 z-0 hidden sm:block transition-all duration-1000"
-                                style={{ width: `${Math.min((gamesBought / maxTarget) * 100, 100)}%` }}
-                            ></div>
+                        {/* Горизонтальный скролл-трек */}
+                        <div className="overflow-x-auto pb-6 pt-4 scrollbar-thin scrollbar-thumb-amber-500/40 scrollbar-track-white/5">
+                            <div className="min-w-[1200px] sm:min-w-[1600px] relative px-6 py-6">
+                                {/* Фоновая серая полоса */}
+                                <div className="absolute top-[32px] left-10 right-10 h-2 bg-gray-800 rounded-full z-0"></div>
+                                
+                                {/* Цветная шкала прогресса */}
+                                <div 
+                                    className="absolute top-[32px] left-10 h-2 bg-gradient-to-r from-pink-500 via-amber-500 to-green-500 rounded-full z-0 transition-all duration-1000"
+                                    style={{ 
+                                        width: `calc(${fillPercent}% - ${fillPercent === 100 ? '40px' : '0px'})`,
+                                        maxWidth: 'calc(100% - 80px)'
+                                    }}
+                                ></div>
 
-                            <div className="flex flex-col sm:flex-row justify-between relative z-10 gap-6 sm:gap-0">
-                                {targetGames.map(target => {
-                                    const isReached = gamesBought >= target;
-                                    const isCurrentNext = !isReached && target === nextTarget;
-                                    
-                                    return (
-                                        <div key={target} className={`flex flex-row sm:flex-col items-center gap-4 sm:gap-3 ${isReached ? 'opacity-100' : isCurrentNext ? 'opacity-100' : 'opacity-50 grayscale'}`}>
-                                            <div className="w-12 h-12 rounded-full font-bold flex justify-center items-center text-lg sm:text-xl border-4 relative bg-gray-900 z-10 transition-all shadow-lg min-w-[3rem]"
-                                                style={{ 
-                                                    borderColor: isReached ? '#f59e0b' : isCurrentNext ? '#f59e0b' : '#374151',
-                                                    color: isReached ? '#f59e0b' : '#9ca3af',
-                                                    boxShadow: isReached || isCurrentNext ? '0 0 20px rgba(245, 158, 11, 0.4)' : 'none'
-                                                }}>
-                                                {target}
-                                                {isReached && (
-                                                    <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="flex flex-col sm:items-center bg-gray-900/80 sm:bg-transparent p-3 sm:p-0 rounded-xl sm:rounded-none w-full sm:w-auto border sm:border-none border-white/5">
-                                                <div className="text-sm sm:text-base font-bold text-white mb-1 sm:text-center max-w-[150px] leading-tight">
-                                                    {getPrizeText(target)}
+                                <div className="flex flex-row justify-between relative z-10">
+                                    {targetGames.map((target, idx) => {
+                                        const isReached = gamesBought >= target;
+                                        const isCurrentNext = !isReached && target === nextTarget;
+                                        
+                                        return (
+                                            <div key={target} className={`flex flex-col items-center gap-4 w-[120px] sm:w-[150px] text-center transition-all duration-300 ${isReached ? 'opacity-100' : isCurrentNext ? 'opacity-100' : 'opacity-40 grayscale'}`}>
+                                                {/* Круглый узел с номером */}
+                                                <div className="w-12 h-12 rounded-full font-bold flex justify-center items-center text-lg sm:text-xl border-4 relative bg-gray-900 z-10 transition-all shadow-lg"
+                                                    style={{ 
+                                                        borderColor: isReached ? '#f59e0b' : isCurrentNext ? '#3b82f6' : '#374151',
+                                                        color: isReached ? '#f59e0b' : isCurrentNext ? '#3b82f6' : '#9ca3af',
+                                                        boxShadow: isReached ? '0 0 20px rgba(245, 158, 11, 0.4)' : isCurrentNext ? '0 0 20px rgba(59, 130, 246, 0.4)' : 'none'
+                                                    }}>
+                                                    {target}
+                                                    {isReached && (
+                                                        <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 
-                                                {isReached ? (
-                                                    <button 
-                                                        onClick={() => claimPrize(target)}
-                                                        className="text-[10px] sm:text-xs bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg mt-1 font-bold uppercase tracking-wider transition-colors"
-                                                    >
-                                                        {lang === 'RU' ? 'Забрать' : 'Алу'}
-                                                    </button>
-                                                ) : (
-                                                    <div className="text-[10px] sm:text-xs text-amber-500 mt-1 sm:text-center">
-                                                        {lang === 'RU' ? `Осталось ${target - gamesBought}` : `${target - gamesBought} қалды`}
+                                                {/* Текстовая награда */}
+                                                <div className="flex flex-col items-center bg-gray-900/60 backdrop-blur-sm p-3 rounded-2xl w-full border border-white/5 shadow-md min-h-[110px] justify-between">
+                                                    <div className="text-xs font-bold text-white leading-snug break-words">
+                                                        {getPrizeText(target)}
                                                     </div>
-                                                )}
+                                                    
+                                                    {isReached ? (
+                                                        <button 
+                                                            onClick={() => claimPrize(target)}
+                                                            className="text-[10px] bg-green-600 hover:bg-green-500 text-white px-2.5 py-1 rounded-lg mt-2 font-bold uppercase tracking-wider transition-colors w-full cursor-pointer"
+                                                        >
+                                                            {lang === 'RU' ? 'Забрать' : 'Алу'}
+                                                        </button>
+                                                    ) : (
+                                                        <div className="text-[10px] text-amber-500 font-semibold mt-2">
+                                                            {lang === 'RU' ? `Осталось ${target - gamesBought}` : `${target - gamesBought} қалды`}
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3401,7 +3501,7 @@ import gta6Bg from './assets/images/gta6_hero_bg_1782395478344.jpg';
                     />
                     <Hero descriptions={descriptions} loading={loading} lang={lang} user={user} />
                     
-                    {user && <LoyaltyProgress user={user} lang={lang} loyaltyPrizes={loyaltyPrizes} />}
+                    {user && <LoyaltyProgress user={user} lang={lang} />}
 
                     {/* Catalog Section */}
                     <section id="catalog" className="pt-12 pb-24 px-6 max-w-7xl mx-auto min-h-screen">
