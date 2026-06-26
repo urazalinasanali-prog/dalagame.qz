@@ -791,10 +791,10 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
             };
 
             return (
-                <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-24 px-4">
+                <section className="relative min-h-screen flex items-end justify-center overflow-hidden pt-28 pb-20 sm:pb-28 px-4">
                     <div className="absolute inset-0 z-0">
                         <img 
-                            src="https://static.wikia.nocookie.net/gtawiki/images/a/a5/Artwork-Trailer2Thumbnail2-GTAVI.jpg/revision/latest/scale-to-width-down/1200?cb=20260330025009" 
+                            src="https://media.ixbt.site/1840x768/smart/ixbt-data/746852/01K4TNASE19S2Z56JY6G7X42YN.jpg" 
                             alt="GTA 6 Background" 
                             className="absolute inset-0 w-full h-full object-cover object-[center_40%] opacity-90 scale-105 filter saturate-[1.1] contrast-[1.05]"
                             referrerPolicy="no-referrer"
@@ -803,7 +803,7 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                         <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/40 via-transparent to-[#050505]/40"></div>
                     </div>
                     
-                    <div className="relative z-10 text-center w-full max-w-4xl mx-auto pt-8">
+                    <div className="relative z-10 text-center w-full max-w-4xl mx-auto pt-32 sm:pt-48">
                         <div className="flex flex-col gap-3 max-w-xl mx-auto mb-10 text-left md:text-center items-start md:items-center bg-black/40 p-5 sm:p-6 md:p-8 rounded-[2rem] border border-white/5 backdrop-blur-sm shadow-2xl">
                             {descriptions.length > 0 ? descriptions.map((desc, i) => (
                                 <div key={i} className="flex items-center gap-3 text-gray-200 text-sm sm:text-base md:text-lg font-medium">
@@ -833,14 +833,14 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
 
                         {/* GTA VI Pre-Order block (PlayStation 5 only) */}
                         <div className="flex flex-col gap-4 items-center justify-center max-w-xl mx-auto mb-10 p-6 rounded-3xl bg-black/60 border border-pink-500/30 backdrop-blur-md shadow-[0_0_30px_rgba(255,51,153,0.15)]">
-                            <span className="text-xs font-gaming font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-orange-400 uppercase tracking-widest">
+                            <span className="text-[10px] sm:text-xs font-gaming font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-orange-400 uppercase tracking-widest">
                                 {lang === 'RU' ? 'Доступно только на PlayStation 5' : 'Тек PlayStation 5-те қолжетімді'}
                             </span>
 
                             <div className="w-full relative">
                                 <button 
                                     onClick={handlePreOrder}
-                                    className="group relative overflow-hidden w-full py-4 bg-gradient-to-r from-[#ff3399] via-[#ff9933] to-[#9933ff] hover:brightness-110 text-white rounded-2xl font-bold font-gaming text-base sm:text-lg transition-all duration-300 shadow-[0_0_25px_rgba(255,51,153,0.5)] cursor-pointer text-center"
+                                    className="group relative overflow-hidden w-full py-4 bg-gradient-to-r from-[#ff3399] via-[#ff9933] to-[#9933ff] hover:brightness-110 text-white rounded-2xl font-bold font-gaming text-xs sm:text-sm transition-all duration-300 shadow-[0_0_25px_rgba(255,51,153,0.5)] cursor-pointer text-center"
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                                     <div className="flex items-center justify-center gap-2">
@@ -2005,7 +2005,7 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                     {showTitle && (
                         <div className="text-center mb-12">
                             <h2 className="text-4xl md:text-6xl font-bold font-gaming uppercase tracking-widest mb-4">
-                                Dala <span className="text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">Pass</span>
+                                Dala<span className="text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]">Pass</span>
                             </h2>
                             <p className="text-lg md:text-xl text-gray-400 font-bold max-w-2xl mx-auto">
                                 {lang === 'RU' ? 'Выполняй задания и получай бонусы на баланс для покупок!' : 'Тапсырмаларды орындаңыз және сатып алулар үшін балансқа бонустар алыңыз!'}
@@ -2499,48 +2499,48 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
             
             const rewards = {
                 1: {
-                    RU: '🎁 +2 000 ₸ на баланс',
-                    KK: '🎁 Балансқа +2 000 ₸'
+                    RU: '🎁\n+2 000 ₸ на баланс',
+                    KK: '🎁\nБалансқа +2 000 ₸'
                 },
                 3: {
-                    RU: '🏅 Уникальный статус «Новобранец DalaGame»',
-                    KK: '🏅 «DalaGame Жаңа ойыншысы» бірегей статусы'
+                    RU: '🏅\nУникальный статус «Новобранец DalaGame»',
+                    KK: '🏅\n«DalaGame Жаңа ойыншысы» бірегей статусы'
                 },
                 5: {
-                    RU: '💰 +5 000 ₸ на баланс',
-                    KK: '💰 Балансқа +5 000 ₸'
+                    RU: '💰\n+5 000 ₸ на баланс',
+                    KK: '💰\nБалансқа +5 000 ₸'
                 },
                 7: {
-                    RU: '🎟️ +1 дополнительный билет в каждом розыгрыше',
-                    KK: '🎟️ Әр ұтыста +1 қосымша билет'
+                    RU: '🎟️\nАвтоматические участие в розыгрышах от DalaGame',
+                    KK: '🎟️\nDalaGame ұтыс ойындарына автоматты түрде қатысу'
                 },
                 10: {
-                    RU: '🎲 Бесплатная прокрутка рулетки',
-                    KK: '🎲 Рулетканы тегін айналдыру'
+                    RU: '🎲\nБесплатная прокрутка рулетки',
+                    KK: '🎲\nРулетканы тегін айналдыру'
                 },
                 12: {
-                    RU: '🎮 Бесплатная игра (по согласованию с менеджером)',
-                    KK: '🎮 Тегін ойын (менеджермен келісу бойынша)'
+                    RU: '🎮\nБесплатная игра (по согласованию с менеджером)',
+                    KK: '🎮\nТегін ойын (менеджермен келісу бойынша)'
                 },
                 15: {
-                    RU: '👑 Статус «Приоритетный клиент» + еще 5 000 ₸ на баланс',
-                    KK: '👑 «Басымдықты клиент» статусы + балансқа тағы 5 000 ₸'
+                    RU: '👑\nСтатус «Приоритетный клиент» + еще 5 000 ₸ на баланс',
+                    KK: '👑\n«Басымдықты клиент» статусы + балансқа тағы 5 000 ₸'
                 },
                 17: {
-                    RU: '🎁 Секретный подарок (рандомная игра или EA Play на месяц)',
-                    KK: '🎁 Құпия сыйлық (кездейсоқ ойын немесе 1 айға EA Play)'
+                    RU: '🎁\nСекретный подарок',
+                    KK: '🎁\nҚұпия сыйлық'
                 },
                 20: {
-                    RU: '🛍️ Персональная скидка 10% на следующую покупку',
-                    KK: '🛍️ Келесі сатып алуға жеке 10% жеңілдік'
+                    RU: '🛍️\nПерсональная скидка 10% на следующую покупку',
+                    KK: '🛍️\nКелесі сатып алуға жеке 10% жеңілдік'
                 },
                 22: {
-                    RU: '🎮 Бесплатная новинка до 10 000 ₸',
-                    KK: '🎮 10 000 ₸-ге дейін тегін жаңа ойын'
+                    RU: '🎮\nБесплатная игра до 10 000 ₸',
+                    KK: '🎮\n10 000 ₸-ге дейін тегін ойын'
                 },
                 25: {
-                    RU: '💎 Статус «Легенда DalaGame» + эксклюзивный цвет профиля',
-                    KK: '💎 «DalaGame Аңызы» статусы + профильдің эксклюзивті түсі'
+                    RU: '💎\nСтатус «Легенда DalaGame» + эксклюзивный цвет профиля',
+                    KK: '💎\n«DalaGame Аңызы» статусы + профильдің эксклюзивті түсі'
                 }
             };
 
@@ -2608,11 +2608,11 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                         <div className="overflow-x-auto pb-6 pt-4 scrollbar-thin scrollbar-thumb-amber-500/40 scrollbar-track-white/5">
                             <div className="min-w-[1200px] sm:min-w-[1600px] relative px-6 py-6">
                                 {/* Фоновая серая полоса */}
-                                <div className="absolute top-[32px] left-10 right-10 h-2 bg-gray-800 rounded-full z-0"></div>
+                                <div className="absolute top-[72px] left-10 right-10 h-2 bg-gray-800 rounded-full z-0"></div>
                                 
                                 {/* Цветная шкала прогресса */}
                                 <div 
-                                    className="absolute top-[32px] left-10 h-2 bg-gradient-to-r from-pink-500 via-amber-500 to-green-500 rounded-full z-0 transition-all duration-1000"
+                                    className="absolute top-[72px] left-10 h-2 bg-gradient-to-r from-pink-500 via-amber-500 to-green-500 rounded-full z-0 transition-all duration-1000"
                                     style={{ 
                                         width: `calc(${fillPercent}% - ${fillPercent === 100 ? '40px' : '0px'})`,
                                         maxWidth: 'calc(100% - 80px)'
@@ -2625,17 +2625,19 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                                         const isCurrentNext = !isReached && target === nextTarget;
                                         
                                         return (
-                                            <div key={target} className={`flex flex-col items-center gap-4 w-[120px] sm:w-[150px] text-center transition-all duration-300 ${isReached ? 'opacity-100' : isCurrentNext ? 'opacity-100' : 'opacity-40 grayscale'}`}>
-                                                {/* Круглый узел с номером */}
-                                                <div className="w-12 h-12 rounded-full font-bold flex justify-center items-center text-lg sm:text-xl border-4 relative bg-gray-900 z-10 transition-all shadow-lg"
+                                            <div key={target} className={`flex flex-col items-center gap-2 w-[120px] sm:w-[150px] text-center transition-all duration-300 ${isReached ? 'opacity-100' : isCurrentNext ? 'opacity-100' : 'opacity-40 grayscale'}`}>
+                                                <div className="text-xl sm:text-2xl font-black font-gaming h-8 flex items-end drop-shadow-md"
+                                                    style={{ color: isReached ? '#f59e0b' : isCurrentNext ? '#3b82f6' : '#9ca3af' }}>
+                                                    {target}
+                                                </div>
+                                                {/* Круглый узел */}
+                                                <div className="w-6 h-6 rounded-full border-4 relative bg-gray-900 z-10 transition-all shadow-lg mb-2"
                                                     style={{ 
                                                         borderColor: isReached ? '#f59e0b' : isCurrentNext ? '#3b82f6' : '#374151',
-                                                        color: isReached ? '#f59e0b' : isCurrentNext ? '#3b82f6' : '#9ca3af',
                                                         boxShadow: isReached ? '0 0 20px rgba(245, 158, 11, 0.4)' : isCurrentNext ? '0 0 20px rgba(59, 130, 246, 0.4)' : 'none'
                                                     }}>
-                                                    {target}
                                                     {isReached && (
-                                                        <div className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
+                                                        <div className="absolute -top-3 -right-3 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                                         </div>
                                                     )}
@@ -2643,7 +2645,7 @@ import gta6Club from './assets/images/gta6_club_1782463120984.jpg';
                                                 
                                                 {/* Текстовая награда */}
                                                 <div className="flex flex-col items-center bg-gray-900/60 backdrop-blur-sm p-3 rounded-2xl w-full border border-white/5 shadow-md min-h-[110px] justify-between">
-                                                    <div className="text-xs font-bold text-white leading-snug break-words">
+                                                    <div className="text-xs font-bold text-white leading-snug break-words whitespace-pre-line">
                                                         {getPrizeText(target)}
                                                     </div>
                                                     
