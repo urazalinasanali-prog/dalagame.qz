@@ -280,10 +280,10 @@ function doPost(e) {
     const regDate = new Date();
 
     // Append new row: Name, Email, Password, Registration Date, Phone, Nickname, Role, Balance, ID, LastIdChange
-    sheet.appendRow([name, email, password, regDate, phone, nickname, "Новичок", 20000, userId, ""]);
+    sheet.appendRow([name, email, password, regDate, phone, nickname, "Новичок", 500, userId, ""]);
     
     // Log initial balance
-    historySheet.appendRow([regDate, email, "Пополнение", 20000, "Бонус при регистрации"]);
+    historySheet.appendRow([regDate, email, "Пополнение", 500, "Бонус при регистрации"]);
     
     SpreadsheetApp.flush();
 
@@ -297,7 +297,7 @@ function doPost(e) {
         phone,
         nickname,
         role: "Новичок",
-        balance: 20000,
+        balance: 500,
         id: userId
       }
     });
